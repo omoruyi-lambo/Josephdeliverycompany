@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Josephdeliverycompany — Preloader Demo</title>
+<style>
+/* ── Brand tokens ─────────────────────────────────────────────── */
+:root {
+  --ink:       #061529;   /* navy-dark — overlay background        */
+  --navy:      #0a1f3c;   /* nav/ink                               */
+  --accent:    #c0392b;   /* brand red                             */
+  --neutral:   #f4f5f7;   /* gray-light — first-half letters       */
+  --muted:     #94a3b8;   /* slate muted text                      */
+  --wipe:      var(--accent);
+}
+
+/* ── Reset ──────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',Arial,Helvetica,sans-serif;background:#fff;overflow-x:hidden}
+
+/* ── Page content (sits beneath the overlay) ──────────────────── */
+.page-content{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:48px 24px;text-align:center;
+}
+.page-content h1{font-size:clamp(22px,4vw,36px);font-weight:800;color:var(--navy);margin-bottom:12px;letter-spacing:-0.4px}
+.page-content p{font-size:15px;color:var(--muted);max-width:380px;line-height:1.6}
+
+/* ── Replay button ──────────────────────────────────────────────── */
+#replay{
+  margin-top:28px;
+  padding:10px 22px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.5px;
+  cursor:pointer;
+  transition:background 0.15s;
+}
+#replay:hover{background:#a93226}
+
+/* ── Overlay ────────────────────────────────────────────────────── */
+#preloader{
+  position:fixed;inset:0;
+  background:var(--ink);
+  z-index:9999;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  overflow:hidden;
+  /* Prevents any layout shift once hidden */
+}
+#preloader.done{display:none}
+
+/* ── Wordmark row ───────────────────────────────────────────────── */
+.wordmark{
+  display:flex;align-items:center;
+  gap:0;
+  line-height:1;
+}
+
+/* Each letter */
+.letter{
+  display:inline-block;
+  font-size:clamp(28px,7vw,72px);
+  font-weight:900;
+  letter-spacing:-0.05em;
+  text-transform:uppercase;
+  opacity:0;
+  transform:translateY(40px);
+  animation:letterRise 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
+  /* default = neutral color; overridden per-half in JS */
+}
+
+@keyframes letterRise{
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── Arrow (inline SVG, accent color) ─────────────────────────── */
+.arrow-wrap{
+  display:inline-flex;
+  align-items:center;
+  /* horizontal breathing room — seats in the kerning gap */
+  margin:0 clamp(4px,1vw,12px);
+  position:relative;
+  top:0.04em; /* optical vertical alignment */
+}
+.arrow-wrap svg{
+  width:clamp(18px,3.5vw,36px);
+  height:auto;
+  /* Hidden until the clip-path animation fires */
+  clip-path:inset(0 100% 0 0);
+  /* The delay keeps arrow invisible while letters rise */
+  animation:arrowReveal 0.3s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-play-state:paused;
+}
+
+@keyframes arrowReveal{
+  to{clip-path:inset(0 0% 0 0)}
+}
+
+/* ── Progress bar ───────────────────────────────────────────────── */
+.progress-track{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:2px;
+  background:rgba(255,255,255,0.08);
+}
+.progress-fill{
+  height:100%;
+  width:0%;
+  background:var(--accent);
+  /* transition driven by JS rAF, no CSS transition needed */
+}
+
+/* ── Counter ────────────────────────────────────────────────────── */
+.counter{
+  position:absolute;
+  bottom:16px;
+  right:24px;
+  font-size:clamp(11px,1.5vw,13px);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0.08em;
+  color:var(--muted);
+}
+
+/* ── Exit: arrow shoots right ──────────────────────────────────── */
+@keyframes arrowShoot{
+  from{transform:translateX(0)}
+  to  {transform:translateX(120vw)}
+}
+/* Exit: red wipe panel ──────────────────────────────────────────── */
+#wipe-panel{
+  position:absolute;inset:0;
+  background:var(--wipe);
+  transform:translateX(-100%);
+  pointer-events:none;
+}
+@keyframes wipeSweep{
+  0%  {transform:translateX(-100%)}
+  45% {transform:translateX(0)}
+  100%{transform:translateX(100%)}
+}
+
+/* ── Reduced-motion: collapse everything ───────────────────────── */
+@media(prefers-reduced-motion:reduce){
+  .letter{
+    animation-duration:0.001s !important;
+    animation-delay:0s !important;
+  }
+  .arrow-wrap svg{
+    animation-duration:0.001s !important;
+    animation-delay:0s !important;
+    animation-play-state:running !important;
+  }
+  #preloader{transition:opacity 0.001s}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Page content (beneath the overlay) ─────────────────────── -->
+<div class="page-content" aria-hidden="true">
+  <h1>Josephdeliverycompany</h1>
+  <p>Reliable shipping and delivery solutions for individuals and businesses, wherever you need to go.</p>
+  <button id="replay">↺ Replay Preloader</button>
+</div>
+
+<!-- ── Preloader overlay ──────────────────────────────────────── -->
+<div id="preloader" role="status" aria-label="Loading Josephdeliverycompany">
+
+  <div class="wordmark" id="wordmark" aria-hidden="true">
+    <!-- Letters injected by JS -->
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+  <div class="counter" id="counter">000</div>
+  <div id="wipe-panel"></div>
+</div>
+
+<script>
+(function(){
+  /* ── CONFIG ──────────────────────────────────────────────────── */
+  const WORD        = 'JOSEPHDELIVERY';
+  const SPLIT_AT    = 6;          // letters before the arrow
+  const LETTER_DELAY= 60;         // ms stagger between letters
+  const ARROW_DELAY = SPLIT_AT * LETTER_DELAY + 40; // fires after last first-half letter
+  const PROGRESS_DURATION = 1600; // ms — total preloader runtime
+  const COLOR_A     = '#f4f5f7';  // neutral — first half
+  const COLOR_B     = '#c0392b';  // accent  — second half
+
+  /* respect reduced-motion */
+  const reduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  const overlay     = document.getElementById('preloader');
+  const wordmark    = document.getElementById('wordmark');
+  const fill        = document.getElementById('progress-fill');
+  const counter     = document.getElementById('counter');
+  const wipePanel   = document.getElementById('wipe-panel');
+  const replayBtn   = document.getElementById('replay');
+
+  /* ── Build wordmark ─────────────────────────────────────────── */
+  function buildWordmark(){
+    wordmark.innerHTML = '';
+
+    for(let i = 0; i < WORD.length; i++){
+      /* Insert arrow between split halves */
+      if(i === SPLIT_AT){
+        const wrap = document.createElement('span');
+        wrap.className = 'arrow-wrap';
+        wrap.id = 'arrow-wrap';
+        wrap.innerHTML = `
+          <svg viewBox="0 0 38 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 9H34M34 9L26 1M34 9L26 17"
+              stroke="#c0392b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>`;
+        wordmark.appendChild(wrap);
+      }
+
+      const span = document.createElement('span');
+      span.className = 'letter';
+      span.textContent = WORD[i];
+      span.style.color = i < SPLIT_AT ? COLOR_A : COLOR_B;
+
+      const delay = reduced ? 0 : i * LETTER_DELAY;
+      span.style.animationDelay = delay + 'ms';
+
+      wordmark.appendChild(span);
+    }
+  }
+
+  /* ── Progress counter (ease-out cubic via parametric t) ─────── */
+  function runProgress(onComplete){
+    if(reduced){
+      fill.style.width = '100%';
+      counter.textContent = '100';
+      onComplete();
+      return;
+    }
+
+    let start = null;
+    /* ease-out cubic: t→1 decelerates, never stalls at 99 */
+    function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+
+    function frame(ts){
+      if(!start) start = ts;
+      const elapsed = ts - start;
+      const raw = Math.min(elapsed / PROGRESS_DURATION, 1);
+      const eased = easeOutCubic(raw);
+      const pct = Math.floor(eased * 100);
+
+      fill.style.width = eased * 100 + '%';
+      counter.textContent = String(pct).padStart(3,'0');
+
+      if(raw < 1){
+        requestAnimationFrame(frame);
+      } else {
+        fill.style.width = '100%';
+        counter.textContent = '100';
+        onComplete();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ── Exit sequence ──────────────────────────────────────────── */
+  function runExit(){
+    if(reduced){
+      overlay.classList.add('done');
+      overlay.setAttribute('aria-hidden','true');
+      return;
+    }
+
+    /* 1. Arrow shoots right */
+    const arrowEl = document.querySelector('#arrow-wrap svg');
+    if(arrowEl){
+      arrowEl.style.animation = 'arrowShoot 0.35s cubic-bezier(0.4,0,1,1) forwards';
+    }
+
+    /* 2. Wipe panel sweeps left→right after tiny delay */
+    setTimeout(()=>{
+      wipePanel.style.animation = 'wipeSweep 0.55s cubic-bezier(0.76,0,0.24,1) forwards';
+      wipePanel.addEventListener('animationend', ()=>{
+        overlay.classList.add('done');
+        overlay.setAttribute('aria-hidden','true');
+      }, { once: true });
+    }, 80);
+  }
+
+  /* ── Fire arrow reveal after letter stagger completes ──────── */
+  function scheduleArrow(){
+    if(reduced) return;
+    setTimeout(()=>{
+      const svg = document.querySelector('#arrow-wrap svg');
+      if(svg){
+        svg.style.animationPlayState = 'running';
+      }
+    }, ARROW_DELAY);
+  }
+
+  /* ── Main init / replay ─────────────────────────────────────── */
+  function run(){
+    /* Reset overlay state */
+    overlay.classList.remove('done');
+    overlay.removeAttribute('aria-hidden');
+    fill.style.width  = '0%';
+    counter.textContent = '000';
+    wipePanel.style.animation = 'none';
+    wipePanel.style.transform  = 'translateX(-100%)';
+
+    buildWordmark();
+    scheduleArrow();
+    runProgress(runExit);
+  }
+
+  /* ── Replay button ──────────────────────────────────────────── */
+  replayBtn.addEventListener('click', run);
+
+  /* ── Auto-start ─────────────────────────────────────────────── */
+  run();
+})();
+</script>
+</body>
+</html>

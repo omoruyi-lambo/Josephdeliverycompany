@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* ─── Brand tokens ──────────────────────────────────────────────────────── */
+:root {
+  --navy:       #0a1f3c;
+  --navy-dark:  #061529;
+  --red:        #c0392b;
+  --red-hover:  #a93226;
+  --gray-light: #f4f5f7;
+  --border:     #e2e6ea;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+  /* Lock to light mode — prevents OS dark-mode from overriding brand colours */
+  color-scheme: light only;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #1a1a2e;
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent horizontal overflow at any viewport width */
+body,
+#__next {
+  overflow-x: hidden;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Normalise list styles globally */
+ul, ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Suppress default anchor colour so components control it */
+a {
+  color: inherit;
+  text-decoration: none;
+}
