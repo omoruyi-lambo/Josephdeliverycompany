@@ -1,39 +1,51 @@
 import '@/styles/globals.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 /* ── Preloader component ──────────────────────────────────────────────────
-   Full-screen overlay that runs once on the first page load.
-   Removed from the flow (display:none) the moment the exit animation ends
-   so it can never block clicks or the tracking form.
+   Full-screen overlay. Starts hidden (opacity:0, pointerEvents:none) and
+   is only activated on the homepage. A hard 2-second timeout guarantees
+   it can never block any page indefinitely.
    ──────────────────────────────────────────────────────────────────────── */
 function Preloader() {
-  const overlayRef  = useRef(null);
-  const fillRef     = useRef(null);
-  const counterRef  = useRef(null);
-  const wipePanelRef= useRef(null);
-  const wordmarkRef = useRef(null);
+  const overlayRef   = useRef(null);
+  const fillRef      = useRef(null);
+  const counterRef   = useRef(null);
+  const wipePanelRef = useRef(null);
+  const wordmarkRef  = useRef(null);
 
   useEffect(() => {
     const WORD         = 'JOSEPHDELIVERY';
     const SPLIT_AT     = 6;
-    const LETTER_DELAY = 60;      // ms stagger
+    const LETTER_DELAY = 60;
     const ARROW_DELAY  = SPLIT_AT * LETTER_DELAY + 40;
-    const DURATION     = 1600;    // ms total runtime
+    const DURATION     = 1600;
     const COLOR_A      = '#f4f5f7';
     const COLOR_B      = '#c0392b';
 
-    const reduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-
-    const overlay   = overlayRef.current;
-    const fill      = fillRef.current;
-    const counter   = counterRef.current;
-    const wipe      = wipePanelRef.current;
-    const wordmark  = wordmarkRef.current;
+    const reduced  = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    const overlay  = overlayRef.current;
+    const fill     = fillRef.current;
+    const counter  = counterRef.current;
+    const wipe     = wipePanelRef.current;
+    const wordmark = wordmarkRef.current;
 
     if (!overlay) return;
 
+    /* Hard safety timeout — overlay MUST disappear within 2.5s no matter what */
+    const safetyTimer = setTimeout(() => dismiss(), 2500);
+
+    function dismiss() {
+      clearTimeout(safetyTimer);
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    /* Make overlay visible now that we know we're on the homepage */
+    overlay.style.opacity = '1';
+    overlay.style.pointerEvents = 'auto';
+
     /* ── Build wordmark ──────────────────────────────────────── */
+    wordmark.innerHTML = '';
     for (let i = 0; i < WORD.length; i++) {
       if (i === SPLIT_AT) {
         const wrap = document.createElement('span');
@@ -74,7 +86,7 @@ function Preloader() {
       wordmark.appendChild(span);
     }
 
-    /* ── Arrow reveal after stagger ─────────────────────────── */
+    /* ── Arrow reveal ────────────────────────────────────────── */
     if (!reduced) {
       setTimeout(() => {
         const svg = document.getElementById('pl-arrow');
@@ -82,19 +94,16 @@ function Preloader() {
       }, ARROW_DELAY);
     } else {
       const svg = document.getElementById('pl-arrow');
-      if (svg) {
-        svg.style.clipPath = 'inset(0 0% 0 0)';
-        svg.style.animation = 'none';
-      }
+      if (svg) { svg.style.clipPath = 'inset(0 0% 0 0)'; svg.style.animation = 'none'; }
     }
 
-    /* ── Progress (ease-out cubic) ──────────────────────────── */
+    /* ── Progress counter ────────────────────────────────────── */
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
     if (reduced) {
-      if (fill) fill.style.width = '100%';
+      if (fill)    fill.style.width = '100%';
       if (counter) counter.textContent = '100';
-      overlay.style.display = 'none';
+      dismiss();
       return;
     }
 
@@ -103,119 +112,79 @@ function Preloader() {
       if (!start) start = ts;
       const raw   = Math.min((ts - start) / DURATION, 1);
       const eased = easeOutCubic(raw);
-      const pct   = Math.floor(eased * 100);
-
-      if (fill)   fill.style.width = eased * 100 + '%';
-      if (counter) counter.textContent = String(pct).padStart(3, '0');
+      if (fill)    fill.style.width = eased * 100 + '%';
+      if (counter) counter.textContent = String(Math.floor(eased * 100)).padStart(3, '0');
 
       if (raw < 1) {
         requestAnimationFrame(frame);
       } else {
-        if (fill)   fill.style.width = '100%';
+        if (fill)    fill.style.width = '100%';
         if (counter) counter.textContent = '100';
         runExit();
       }
     }
     requestAnimationFrame(frame);
 
-    /* ── Exit sequence ──────────────────────────────────────── */
+    /* ── Exit ────────────────────────────────────────────────── */
     function runExit() {
       const arrowEl = document.getElementById('pl-arrow');
-      if (arrowEl) {
-        arrowEl.style.animation = 'plArrowShoot 0.35s cubic-bezier(0.4,0,1,1) forwards';
-      }
+      if (arrowEl) arrowEl.style.animation = 'plArrowShoot 0.35s cubic-bezier(0.4,0,1,1) forwards';
+
       setTimeout(() => {
-        if (wipe) {
-          wipe.style.animation = 'plWipeSweep 0.55s cubic-bezier(0.76,0,0.24,1) forwards';
-          wipe.addEventListener('animationend', () => {
-            if (overlay) overlay.style.display = 'none';
-          }, { once: true });
-        }
+        if (!wipe) { dismiss(); return; }
+        wipe.style.animation = 'plWipeSweep 0.55s cubic-bezier(0.76,0,0.24,1) forwards';
+        /* Listen for end; fallback in case animationend never fires */
+        const endTimer = setTimeout(dismiss, 700);
+        wipe.addEventListener('animationend', () => { clearTimeout(endTimer); dismiss(); }, { once: true });
       }, 80);
     }
 
-    /* Cleanup on unmount (shouldn't happen but safe) */
-    return () => { if (overlay) overlay.style.display = 'none'; };
+    return () => { clearTimeout(safetyTimer); dismiss(); };
   }, []);
 
   return (
     <>
       <style>{`
-        @keyframes plLetterRise {
-          to { opacity:1; transform:translateY(0) }
-        }
-        @keyframes plArrowReveal {
-          to { clip-path:inset(0 0% 0 0) }
-        }
-        @keyframes plArrowShoot {
-          from { transform:translateX(0) }
-          to   { transform:translateX(120vw) }
-        }
-        @keyframes plWipeSweep {
-          0%   { transform:translateX(-100%) }
-          45%  { transform:translateX(0) }
-          100% { transform:translateX(100%) }
-        }
+        @keyframes plLetterRise  { to { opacity:1; transform:translateY(0) } }
+        @keyframes plArrowReveal { to { clip-path:inset(0 0% 0 0) } }
+        @keyframes plArrowShoot  { from{transform:translateX(0)} to{transform:translateX(120vw)} }
+        @keyframes plWipeSweep   { 0%{transform:translateX(-100%)} 45%{transform:translateX(0)} 100%{transform:translateX(100%)} }
       `}</style>
 
+      {/* Starts invisible (opacity:0, pointerEvents:none) — activated in useEffect only on homepage */}
       <div
         ref={overlayRef}
         role="status"
         aria-label="Loading Josephdeliverycompany"
         style={{
-          position: 'fixed',
-          inset: 0,
+          position: 'fixed', inset: 0,
           backgroundColor: '#061529',
           zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
           overflow: 'hidden',
+          opacity: 0,            /* hidden until useEffect activates it */
+          pointerEvents: 'none', /* never blocks clicks until activated  */
         }}
       >
-        {/* Wordmark */}
-        <div
-          ref={wordmarkRef}
-          style={{ display: 'flex', alignItems: 'center', lineHeight: 1 }}
-        />
+        <div ref={wordmarkRef} style={{ display: 'flex', alignItems: 'center', lineHeight: 1 }} />
 
-        {/* Progress hairline */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          height: '2px', backgroundColor: 'rgba(255,255,255,0.08)',
-        }}>
-          <div
-            ref={fillRef}
-            style={{ height: '100%', width: '0%', backgroundColor: '#c0392b' }}
-          />
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'2px', backgroundColor:'rgba(255,255,255,0.08)' }}>
+          <div ref={fillRef} style={{ height:'100%', width:'0%', backgroundColor:'#c0392b' }} />
         </div>
 
-        {/* Counter */}
-        <div
-          ref={counterRef}
-          style={{
-            position: 'absolute', bottom: '16px', right: '24px',
-            fontSize: 'clamp(11px,1.5vw,13px)',
-            fontWeight: 700,
-            fontVariantNumeric: 'tabular-nums',
-            letterSpacing: '0.08em',
-            color: '#94a3b8',
-          }}
-        >
-          000
-        </div>
+        <div ref={counterRef} style={{
+          position:'absolute', bottom:'16px', right:'24px',
+          fontSize:'clamp(11px,1.5vw,13px)', fontWeight:700,
+          fontVariantNumeric:'tabular-nums', letterSpacing:'0.08em', color:'#94a3b8',
+        }}>000</div>
 
-        {/* Wipe panel */}
-        <div
-          ref={wipePanelRef}
-          style={{
-            position: 'absolute', inset: 0,
-            backgroundColor: '#c0392b',
-            transform: 'translateX(-100%)',
-            pointerEvents: 'none',
-          }}
-        />
+        <div ref={wipePanelRef} style={{
+          position:'absolute', inset:0,
+          backgroundColor:'#c0392b',
+          transform:'translateX(-100%)',
+          pointerEvents:'none',
+        }} />
       </div>
     </>
   );
@@ -224,13 +193,20 @@ function Preloader() {
 /* ── App shell ─────────────────────────────────────────────────────────── */
 export default function App({ Component, pageProps }) {
   const router = useRouter();
+  const [showPreloader, setShowPreloader] = useState(false);
 
-  /* Only show preloader on the very first render (home page entry) */
-  const isHome = router.pathname === '/';
+  useEffect(() => {
+    /* Only show preloader on the very first visit to the homepage.
+       Using sessionStorage so it only runs once per browser session. */
+    if (router.pathname === '/' && !sessionStorage.getItem('pl_done')) {
+      sessionStorage.setItem('pl_done', '1');
+      setShowPreloader(true);
+    }
+  }, [router.pathname]);
 
   return (
     <>
-      {isHome && <Preloader />}
+      {showPreloader && <Preloader />}
       <Component {...pageProps} />
     </>
   );
