@@ -7,7 +7,7 @@ const VALUES = [
   { icon: 'fa-solid fa-handshake', title: 'Reliability', desc: 'We do what we say. Every booking is a commitment we take seriously.' },
   { icon: 'fa-solid fa-shield-halved', title: 'Transparency', desc: 'Real-time tracking, honest pricing, no hidden fees — ever.' },
   { icon: 'fa-solid fa-bolt', title: 'Speed', desc: 'We move fast. Our infrastructure is built for next-day and same-day performance.' },
-  { icon: 'fa-solid fa-heart', title: 'Care', desc: 'Your goods are treated with the same care we'd give our own belongings.' },
+  { icon: 'fa-solid fa-heart', title: 'Care', desc: "Your goods are treated with the same care we'd give our own belongings." },
 ];
 
 const TEAM = [

@@ -13,7 +13,7 @@ export default function DomesticPage() {
       metaDesc="Affordable domestic shipping across all of Nigeria. Tracked parcels, proof of delivery, up to 70 kg. Perfect for e-commerce and personal shipments."
       features={[
         { icon: 'fa-solid fa-map-location-dot', title: 'Nationwide Coverage', desc: 'Every local government area in all 36 states and the FCT.' },
-        { icon: 'fa-solid fa-magnifying-glass-location', title: 'Online Tracking', desc: 'Track your parcel's journey at every checkpoint in real time.' },
+        { icon: 'fa-solid fa-magnifying-glass-location', title: 'Online Tracking', desc: "Track your parcel's journey at every checkpoint in real time." },
         { icon: 'fa-solid fa-file-signature', title: 'Proof of Delivery', desc: 'Digital confirmation with recipient signature stored on your account.' },
         { icon: 'fa-solid fa-weight-scale', title: 'Up to 70 kg', desc: 'Standard domestic service handles parcels up to 70 kg per shipment.' },
         { icon: 'fa-solid fa-boxes-stacked', title: 'Bulk Discounts', desc: 'Volume pricing available for businesses shipping more than 20 parcels per week.' },

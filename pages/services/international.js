@@ -16,7 +16,7 @@ export default function InternationalPage() {
         { icon: 'fa-solid fa-file-contract', title: 'Customs Documentation', desc: 'We prepare and manage all export and import documentation including commercial invoices and CN22/CN23 forms.' },
         { icon: 'fa-solid fa-shield-halved', title: 'Comprehensive Insurance', desc: 'Full declared-value insurance available for all international shipments.' },
         { icon: 'fa-solid fa-location-dot', title: 'End-to-End Tracking', desc: 'Track your shipment from Lagos to its final international destination.' },
-        { icon: 'fa-solid fa-door-open', title: 'Door-to-Door', desc: 'Pickup from your address in Nigeria, delivered to the recipient's door internationally.' },
+        { icon: 'fa-solid fa-door-open', title: 'Door-to-Door', desc: "Pickup from your address in Nigeria, delivered to the recipient's door internationally." },
         { icon: 'fa-solid fa-plane-up', title: 'Air & Sea Freight', desc: 'Choose express air freight or economical sea freight depending on your timeline and budget.' },
       ]}
       steps={[
