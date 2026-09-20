@@ -23,7 +23,7 @@ export default function InternationalPage() {
         { n: '01', title: 'Get a Quote', desc: 'Enter your destination country, dimensions, and weight for an instant price.' },
         { n: '02', title: 'Book & Prepare Docs', desc: 'We guide you through required customs forms and commercial declarations.' },
         { n: '03', title: 'Pickup & Export', desc: 'Your parcel is collected, cleared through Nigerian customs, and dispatched.' },
-        { n: '04', title: 'International Delivery', desc: 'Our partner network delivers to the recipient's door with full tracking.' },
+        { n: '04', title: 'International Delivery', desc: "Our partner network delivers to the recipient's door with full tracking." },
       ]}
       faqs={[
         { q: 'Which countries do you ship to?', a: 'We deliver to 180+ countries including the UK, USA, Canada, Germany, France, China, UAE, South Africa, Kenya, and Ghana. Get a quote to check your specific destination.' },
