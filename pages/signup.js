@@ -142,7 +142,8 @@ export default function SignUpPage() {
                         transition: 'all 0.15s',
                       }}
                     >
-                      {type === 'personal' ? '👤 Personal' : '🏢 Business'}
+                      <i className={type === 'personal' ? 'fa-solid fa-user' : 'fa-solid fa-building'} style={{ marginRight: 7 }} />
+                    {type === 'personal' ? 'Personal' : 'Business'}
                     </button>
                   ))}
                 </div>
