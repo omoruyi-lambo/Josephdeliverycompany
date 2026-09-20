@@ -2,10 +2,10 @@ import '@/styles/globals.css';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
-/* ── Preloader component ──────────────────────────────────────────────────
-   Full-screen overlay. Starts hidden (opacity:0, pointerEvents:none) and
-   is only activated on the homepage. A hard 2-second timeout guarantees
-   it can never block any page indefinitely.
+/* ── Preloader ────────────────────────────────────────────────────────────
+   Mounts only on the homepage. Starts fully visible (covers page) and
+   dismisses itself after the ~1.6 s animation. A 2.5 s hard timeout
+   guarantees it can never block the page indefinitely.
    ──────────────────────────────────────────────────────────────────────── */
 function Preloader() {
   const overlayRef   = useRef(null);
@@ -32,17 +32,13 @@ function Preloader() {
 
     if (!overlay) return;
 
-    /* Hard safety timeout — overlay MUST disappear within 2.5s no matter what */
-    const safetyTimer = setTimeout(() => dismiss(), 2500);
+    /* Hard safety — overlay gone within 2.5 s no matter what */
+    const safetyTimer = setTimeout(dismiss, 2500);
 
     function dismiss() {
       clearTimeout(safetyTimer);
       if (overlay) overlay.style.display = 'none';
     }
-
-    /* Make overlay visible now that we know we're on the homepage */
-    overlay.style.opacity = '1';
-    overlay.style.pointerEvents = 'auto';
 
     /* ── Build wordmark ──────────────────────────────────────── */
     wordmark.innerHTML = '';
@@ -50,51 +46,36 @@ function Preloader() {
       if (i === SPLIT_AT) {
         const wrap = document.createElement('span');
         wrap.id = 'pl-arrow-wrap';
-        wrap.style.cssText = `
-          display:inline-flex;align-items:center;
-          margin:0 clamp(4px,1vw,12px);
-          position:relative;top:0.04em;
-        `;
-        wrap.innerHTML = `
-          <svg id="pl-arrow" viewBox="0 0 38 18" fill="none"
-            xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
-            style="width:clamp(18px,3.5vw,36px);height:auto;
-                   clip-path:inset(0 100% 0 0);
-                   animation:plArrowReveal 0.3s cubic-bezier(0.22,1,0.36,1) forwards;
-                   animation-play-state:paused;">
-            <path d="M0 9H34M34 9L26 1M34 9L26 17"
-              stroke="#c0392b" stroke-width="2.6"
-              stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>`;
+        wrap.style.cssText = 'display:inline-flex;align-items:center;margin:0 clamp(4px,1vw,12px);position:relative;top:0.04em;';
+        wrap.innerHTML = '<svg id="pl-arrow" viewBox="0 0 38 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:clamp(18px,3.5vw,36px);height:auto;clip-path:inset(0 100% 0 0);animation:plArrowReveal 0.3s cubic-bezier(0.22,1,0.36,1) forwards;animation-play-state:paused;"><path d="M0 9H34M34 9L26 1M34 9L26 17" stroke="#c0392b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         wordmark.appendChild(wrap);
       }
-
       const span = document.createElement('span');
       span.textContent = WORD[i];
-      span.style.cssText = `
-        display:inline-block;
-        font-size:clamp(28px,7vw,72px);
-        font-weight:900;
-        letter-spacing:-0.05em;
-        text-transform:uppercase;
-        color:${i < SPLIT_AT ? COLOR_A : COLOR_B};
-        opacity:0;
-        transform:translateY(40px);
-        animation:plLetterRise 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
-        animation-delay:${reduced ? 0 : i * LETTER_DELAY}ms;
-      `;
+      span.style.cssText = [
+        'display:inline-block',
+        'font-size:clamp(28px,7vw,72px)',
+        'font-weight:900',
+        'letter-spacing:-0.05em',
+        'text-transform:uppercase',
+        'color:' + (i < SPLIT_AT ? COLOR_A : COLOR_B),
+        'opacity:0',
+        'transform:translateY(40px)',
+        'animation:plLetterRise 0.35s cubic-bezier(0.22,1,0.36,1) forwards',
+        'animation-delay:' + (reduced ? 0 : i * LETTER_DELAY) + 'ms',
+      ].join(';');
       wordmark.appendChild(span);
     }
 
     /* ── Arrow reveal ────────────────────────────────────────── */
-    if (!reduced) {
+    if (reduced) {
+      const svg = document.getElementById('pl-arrow');
+      if (svg) { svg.style.clipPath = 'inset(0 0% 0 0)'; svg.style.animation = 'none'; }
+    } else {
       setTimeout(() => {
         const svg = document.getElementById('pl-arrow');
         if (svg) svg.style.animationPlayState = 'running';
       }, ARROW_DELAY);
-    } else {
-      const svg = document.getElementById('pl-arrow');
-      if (svg) { svg.style.clipPath = 'inset(0 0% 0 0)'; svg.style.animation = 'none'; }
     }
 
     /* ── Progress counter ────────────────────────────────────── */
@@ -112,9 +93,8 @@ function Preloader() {
       if (!start) start = ts;
       const raw   = Math.min((ts - start) / DURATION, 1);
       const eased = easeOutCubic(raw);
-      if (fill)    fill.style.width = eased * 100 + '%';
+      if (fill)    fill.style.width = (eased * 100) + '%';
       if (counter) counter.textContent = String(Math.floor(eased * 100)).padStart(3, '0');
-
       if (raw < 1) {
         requestAnimationFrame(frame);
       } else {
@@ -125,15 +105,13 @@ function Preloader() {
     }
     requestAnimationFrame(frame);
 
-    /* ── Exit ────────────────────────────────────────────────── */
+    /* ── Exit sequence ───────────────────────────────────────── */
     function runExit() {
       const arrowEl = document.getElementById('pl-arrow');
       if (arrowEl) arrowEl.style.animation = 'plArrowShoot 0.35s cubic-bezier(0.4,0,1,1) forwards';
-
       setTimeout(() => {
         if (!wipe) { dismiss(); return; }
         wipe.style.animation = 'plWipeSweep 0.55s cubic-bezier(0.76,0,0.24,1) forwards';
-        /* Listen for end; fallback in case animationend never fires */
         const endTimer = setTimeout(dismiss, 700);
         wipe.addEventListener('animationend', () => { clearTimeout(endTimer); dismiss(); }, { once: true });
       }, 80);
@@ -147,12 +125,14 @@ function Preloader() {
       <style>{`
         @keyframes plLetterRise  { to { opacity:1; transform:translateY(0) } }
         @keyframes plArrowReveal { to { clip-path:inset(0 0% 0 0) } }
-        @keyframes plArrowShoot  { from{transform:translateX(0)} to{transform:translateX(120vw)} }
-        @keyframes plWipeSweep   { 0%{transform:translateX(-100%)} 45%{transform:translateX(0)} 100%{transform:translateX(100%)} }
+        @keyframes plArrowShoot  { from { transform:translateX(0) } to { transform:translateX(120vw) } }
+        @keyframes plWipeSweep   { 0% { transform:translateX(-100%) } 45% { transform:translateX(0) } 100% { transform:translateX(100%) } }
+        @media (prefers-reduced-motion: reduce) {
+          #pl-preloader * { animation-duration: 0.001s !important; animation-delay: 0s !important; }
+        }
       `}</style>
-
-      {/* Starts invisible (opacity:0, pointerEvents:none) — activated in useEffect only on homepage */}
       <div
+        id="pl-preloader"
         ref={overlayRef}
         role="status"
         aria-label="Loading Josephdeliverycompany"
@@ -163,27 +143,25 @@ function Preloader() {
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
           overflow: 'hidden',
-          opacity: 0,            /* hidden until useEffect activates it */
-          pointerEvents: 'none', /* never blocks clicks until activated  */
         }}
       >
         <div ref={wordmarkRef} style={{ display: 'flex', alignItems: 'center', lineHeight: 1 }} />
 
-        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'2px', backgroundColor:'rgba(255,255,255,0.08)' }}>
-          <div ref={fillRef} style={{ height:'100%', width:'0%', backgroundColor:'#c0392b' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', backgroundColor: 'rgba(255,255,255,0.08)' }}>
+          <div ref={fillRef} style={{ height: '100%', width: '0%', backgroundColor: '#c0392b' }} />
         </div>
 
         <div ref={counterRef} style={{
-          position:'absolute', bottom:'16px', right:'24px',
-          fontSize:'clamp(11px,1.5vw,13px)', fontWeight:700,
-          fontVariantNumeric:'tabular-nums', letterSpacing:'0.08em', color:'#94a3b8',
+          position: 'absolute', bottom: '16px', right: '24px',
+          fontSize: 'clamp(11px,1.5vw,13px)', fontWeight: 700,
+          fontVariantNumeric: 'tabular-nums', letterSpacing: '0.08em', color: '#94a3b8',
         }}>000</div>
 
         <div ref={wipePanelRef} style={{
-          position:'absolute', inset:0,
-          backgroundColor:'#c0392b',
-          transform:'translateX(-100%)',
-          pointerEvents:'none',
+          position: 'absolute', inset: 0,
+          backgroundColor: '#c0392b',
+          transform: 'translateX(-100%)',
+          pointerEvents: 'none',
         }} />
       </div>
     </>
@@ -193,23 +171,13 @@ function Preloader() {
 /* ── App shell ─────────────────────────────────────────────────────────── */
 export default function App({ Component, pageProps }) {
   const router = useRouter();
-  const [showPreloader, setShowPreloader] = useState(false);
-
-  useEffect(() => {
-    /* Show preloader on homepage entry. sessionStorage prevents it
-       re-running on back-navigation within the same session. */
-    if (router.pathname === '/') {
-      const done = sessionStorage.getItem('pl_done');
-      if (!done) {
-        sessionStorage.setItem('pl_done', '1');
-        setShowPreloader(true);
-      }
-    }
-  }, [router.pathname]);
+  /* True only on the homepage — evaluated at first render so the
+     preloader is in the DOM before any content paints.             */
+  const isHome = router.pathname === '/';
 
   return (
     <>
-      {showPreloader && <Preloader />}
+      {isHome && <Preloader />}
       <Component {...pageProps} />
     </>
   );
