@@ -2,12 +2,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 const NAV_LINKS = [
-  { label: 'Shipping', href: '/shipping', hasDropdown: true },
-  { label: 'Tracking', href: '/track', hasDropdown: false },
-  { label: 'Services', href: '/services', hasDropdown: true },
+  { label: 'Shipping', href: '/shipping', hasDropdown: false },
+  { label: 'Track', href: '/track', hasDropdown: false },
+  { label: 'Services', href: '/services', hasDropdown: false },
   { label: 'Locations', href: '/locations', hasDropdown: false },
+  { label: 'About', href: '/about', hasDropdown: false },
   { label: 'Support', href: '/support', hasDropdown: false },
-  { label: 'Sign Up', href: '/signup', hasDropdown: false },
 ];
 
 export default function Header() {
@@ -136,6 +136,23 @@ export default function Header() {
                 Sign In
               </Link>
               <Link
+                href="/signup"
+                className="signup-btn"
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#0a1f3c',
+                  textDecoration: 'none',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  whiteSpace: 'nowrap',
+                  transition: 'background-color 0.15s',
+                }}
+              >
+                Sign Up
+              </Link>
+              <Link
                 href="/quote"
                 className="quote-btn"
                 style={{
@@ -224,6 +241,23 @@ export default function Header() {
                 Sign In
               </Link>
               <Link
+                href="/signup"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  display: 'block',
+                  padding: '13px 16px',
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  color: '#0a1f3c',
+                  textDecoration: 'none',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  textAlign: 'center',
+                }}
+              >
+                Sign Up
+              </Link>
+              <Link
                 href="/quote"
                 onClick={() => setMobileOpen(false)}
                 style={{
@@ -261,6 +295,9 @@ export default function Header() {
           background-color: #f4f5f7 !important;
         }
         .signin-btn:hover {
+          background-color: #f4f5f7 !important;
+        }
+        .signup-btn:hover {
           background-color: #f4f5f7 !important;
         }
         .quote-btn:hover {
