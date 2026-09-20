@@ -196,11 +196,14 @@ export default function App({ Component, pageProps }) {
   const [showPreloader, setShowPreloader] = useState(false);
 
   useEffect(() => {
-    /* Only show preloader on the very first visit to the homepage.
-       Using sessionStorage so it only runs once per browser session. */
-    if (router.pathname === '/' && !sessionStorage.getItem('pl_done')) {
-      sessionStorage.setItem('pl_done', '1');
-      setShowPreloader(true);
+    /* Show preloader on homepage entry. sessionStorage prevents it
+       re-running on back-navigation within the same session. */
+    if (router.pathname === '/') {
+      const done = sessionStorage.getItem('pl_done');
+      if (!done) {
+        sessionStorage.setItem('pl_done', '1');
+        setShowPreloader(true);
+      }
     }
   }, [router.pathname]);
 
