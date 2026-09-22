@@ -182,10 +182,9 @@ CREATE TABLE IF NOT EXISTS public.shipments (
 
   -- ── Timestamps ──────────────────────────────────────────────────────────
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-  -- ── Constraints ─────────────────────────────────────────────────────────
-  CONSTRAINT shipments_tracking_number_unique UNIQUE (tracking_number)
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  -- Unique constraint on tracking_number is enforced via
+  -- CREATE UNIQUE INDEX below (idx_shipments_tracking_number)
 );
 
 -- updated_at auto-maintenance for shipments
