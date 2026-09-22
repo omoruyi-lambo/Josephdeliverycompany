@@ -16,15 +16,27 @@ import { getShipmentByTrackingNumber } from '../lib/trackingData';
  * getServerSideProps — resolves all tracking data server-side so the full
  * page (including the map) renders on the very first HTTP response.
  *
- * To connect a real database: replace getShipmentByTrackingNumber() here only.
- * Nothing else in the file needs to change.
+ * getShipmentByTrackingNumber is now async (queries Supabase).
+ * Errors are caught here and result in shipment: null (not-found state).
+ * Database error details are never sent to the client.
  */
 export async function getServerSideProps({ query }) {
   const rawTracking    = query.tracking ?? '';
   const trackingNumber = normaliseTrackingNumber(rawTracking);
   const hasInput       = trackingNumber.length > 0;
   const formatValid    = hasInput && isValidTrackingNumber(trackingNumber);
-  const shipment       = formatValid ? getShipmentByTrackingNumber(trackingNumber) : null;
+
+  let shipment = null;
+  if (formatValid) {
+    try {
+      shipment = await getShipmentByTrackingNumber(trackingNumber);
+    } catch (err) {
+      /* Safety net — should not reach here because trackingData.js handles
+         its own errors, but we guard anyway to protect the page render. */
+      console.error('[track.js] getShipmentByTrackingNumber threw:', err?.message ?? err);
+      shipment = null;
+    }
+  }
 
   return {
     props: {
@@ -89,26 +101,6 @@ export default function TrackPage({
           {/* ── State 4: Shipment found ────────────────────────────── */}
           {shipment && (
             <>
-              {/* Demo disclaimer */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                backgroundColor: '#fffbeb',
-                border: '1px solid #fde68a',
-                borderRadius: '3px',
-                padding: '9px 14px',
-                marginBottom: '20px',
-                maxWidth: '860px',
-              }}>
-                <i className="fa-solid fa-triangle-exclamation"
-                  style={{ fontSize: '12px', color: '#d97706', flexShrink: 0 }} />
-                <p style={{ fontSize: '12px', color: '#92400e', lineHeight: 1.4 }}>
-                  <strong>Demo mode.</strong>{' '}
-                  This data is for demonstration purposes only and does not represent a real shipment.
-                </p>
-              </div>
-
               {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                   SHIPMENT MAP — primary visual element, shown first
                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}

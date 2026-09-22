@@ -59,14 +59,11 @@ export default function ShipmentDetails({ shipment }) {
         fontSize: '16px',
         fontWeight: 700,
         color: '#0a1f3c',
-        marginBottom: '4px',
+        marginBottom: '20px',
         letterSpacing: '0.1px',
       }}>
         Shipment Details
       </h2>
-      <p style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '20px' }}>
-        This is demo data for demonstration purposes only.
-      </p>
 
       <div>
         {rows.map((row, i) => (

@@ -436,7 +436,7 @@ export default function ShipmentMap({ mapData, statusCode }) {
           {currentCity}
         </span>
         <span style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '11px' }}>
-          Demo data — not a live position
+          Admin-recorded location
         </span>
       </div>
     </div>
