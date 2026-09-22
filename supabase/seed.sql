@@ -1,18 +1,35 @@
 -- =============================================================================
--- JOSEPHDELIVERYCOMPANY — Seed Data (Test Shipment)
+-- JOSEPHDELIVERYCOMPANY — Seed Data
 -- =============================================================================
 -- Run this in Supabase SQL Editor AFTER schema.sql has been applied.
 --
--- This inserts ONE real test shipment (JDC-2026-00127) plus its tracking
--- events so the /track page can be tested with live Supabase data.
+-- Shipment: JDC-2026-00127
+-- Route:    Miami, United States → São Paulo, Brazil
+-- Status:   ON HOLD — customs clearance required
 --
--- Safe to re-run: uses INSERT ... ON CONFLICT DO UPDATE so existing rows
--- are updated rather than duplicated.
+-- Safe to re-run: INSERT ... ON CONFLICT DO UPDATE replaces existing data.
+--
+-- Coordinates (WGS-84):
+--   Miami, USA     : lat  25.7617, lng  -80.1918
+--   São Paulo, BRA : lat -23.5505, lng  -46.6333
+--
+-- current_position = 1.0 (shipment has reached São Paulo, now on hold)
 -- =============================================================================
 
 
 -- ---------------------------------------------------------------------------
--- 1. INSERT TEST SHIPMENT
+-- STEP 1: Delete stale tracking events for this shipment before re-inserting.
+--         This avoids duplicate events on repeated runs.
+-- ---------------------------------------------------------------------------
+
+DELETE FROM public.tracking_events
+WHERE shipment_id = (
+  SELECT id FROM public.shipments WHERE tracking_number = 'JDC-2026-00127'
+);
+
+
+-- ---------------------------------------------------------------------------
+-- STEP 2: Upsert the shipment row.
 -- ---------------------------------------------------------------------------
 
 INSERT INTO public.shipments (
@@ -40,47 +57,60 @@ INSERT INTO public.shipments (
 )
 VALUES (
   'JDC-2026-00127',
-  NULL,                                          -- no customer account yet
+  NULL,
   'Test Customer',
-  'In Transit',
-  'IN_TRANSIT',
-  'En route — between Lagos and Benin City',
-  'September 24, 2026',
-  'Express Delivery',
-  'Express Delivery',
-  'Lagos, Nigeria',
-  'Benin City, Nigeria',
-  'September 20, 2026',
-  'Parcel',
-  'Lagos',
-  'Benin City',
-  'En route',
-  6.5244,                                        -- Lagos lat
-  3.3792,                                        -- Lagos lng
-  6.3350,                                        -- Benin City lat
-  5.6037,                                        -- Benin City lng
-  0.55                                           -- 55% along the route
+  'On Hold',                              -- status (human label shown in UI)
+  'ON_HOLD',                              -- status_code (machine code for colour logic)
+  'São Paulo, Brazil — Customs Hold',     -- current_location
+  'TBD — Pending customs clearance',     -- estimated_delivery
+  'International',                        -- shipment_type
+  'International Shipping',               -- service
+  'Miami, United States',                 -- origin
+  'São Paulo, Brazil',                    -- destination
+  'September 18, 2026',                   -- shipment_date
+  'Commercial Package',                   -- package_type
+  'Miami',                                -- origin_city
+  'São Paulo',                            -- destination_city
+  'São Paulo',                            -- current_city
+   25.7617,                               -- origin_lat  (Miami)
+  -80.1918,                               -- origin_lng  (Miami)
+  -23.5505,                               -- destination_lat (São Paulo)
+  -46.6333,                               -- destination_lng (São Paulo)
+  1.0                                     -- current_position: at destination (held at São Paulo)
 )
 ON CONFLICT (tracking_number)
 DO UPDATE SET
-  status            = EXCLUDED.status,
-  status_code       = EXCLUDED.status_code,
-  current_location  = EXCLUDED.current_location,
-  current_city      = EXCLUDED.current_city,
-  current_position  = EXCLUDED.current_position,
-  updated_at        = NOW();
+  customer_name       = EXCLUDED.customer_name,
+  status              = EXCLUDED.status,
+  status_code         = EXCLUDED.status_code,
+  current_location    = EXCLUDED.current_location,
+  estimated_delivery  = EXCLUDED.estimated_delivery,
+  shipment_type       = EXCLUDED.shipment_type,
+  service             = EXCLUDED.service,
+  origin              = EXCLUDED.origin,
+  destination         = EXCLUDED.destination,
+  shipment_date       = EXCLUDED.shipment_date,
+  package_type        = EXCLUDED.package_type,
+  origin_city         = EXCLUDED.origin_city,
+  destination_city    = EXCLUDED.destination_city,
+  current_city        = EXCLUDED.current_city,
+  origin_lat          = EXCLUDED.origin_lat,
+  origin_lng          = EXCLUDED.origin_lng,
+  destination_lat     = EXCLUDED.destination_lat,
+  destination_lng     = EXCLUDED.destination_lng,
+  current_position    = EXCLUDED.current_position,
+  updated_at          = NOW();
 
 
 -- ---------------------------------------------------------------------------
--- 2. CAPTURE THE SHIPMENT ID FOR SUBSEQUENT EVENT INSERTS
---    Supabase SQL Editor: run this block to get the id, then use it below.
---    Or just run the whole file — the CTE handles it automatically.
+-- STEP 3: Insert tracking events using a CTE to capture the shipment id.
+--         Events are ordered chronologically.
+--         event_date = NULL means the step has not happened yet (upcoming).
 -- ---------------------------------------------------------------------------
 
 WITH shipment AS (
   SELECT id FROM public.shipments WHERE tracking_number = 'JDC-2026-00127'
 )
-
 INSERT INTO public.tracking_events (
   shipment_id,
   status,
@@ -96,60 +126,68 @@ SELECT
   e.event_date
 FROM shipment,
 (VALUES
+  -- Event 1: Booked
   (
     'Shipment Booked',
     'Shipment information received and booking confirmed.',
-    'Lagos, Nigeria',
-    '2026-09-20 08:14:00+01'::TIMESTAMPTZ
+    'Miami, United States',
+    '2026-09-18 09:00:00-04'::TIMESTAMPTZ   -- UTC-4 (EDT)
   ),
+  -- Event 2: Picked Up
   (
     'Package Picked Up',
-    'Package collected from sender at Lagos Island.',
-    'Lagos Island, Lagos',
-    '2026-09-20 11:32:00+01'::TIMESTAMPTZ
+    'Package collected from sender in Miami.',
+    'Miami, United States',
+    '2026-09-18 13:30:00-04'::TIMESTAMPTZ
   ),
+  -- Event 3: Departed Origin
   (
-    'Arrived at Lagos Facility',
-    'Shipment processed and dispatched from the Lagos hub.',
-    'Apapa Hub, Lagos',
-    '2026-09-20 15:47:00+01'::TIMESTAMPTZ
+    'Departed Origin Facility',
+    'Shipment departed Miami International cargo facility.',
+    'Miami, United States',
+    '2026-09-19 02:15:00-04'::TIMESTAMPTZ
   ),
+  -- Event 4: Arrived in Brazil
   (
-    'In Transit',
-    'Shipment is currently moving towards Benin City.',
-    'En route — Lagos to Benin City',
-    '2026-09-21 07:05:00+01'::TIMESTAMPTZ
+    'Arrived in Brazil',
+    'Shipment arrived at São Paulo — Guarulhos International cargo terminal.',
+    'São Paulo, Brazil',
+    '2026-09-20 14:45:00-03'::TIMESTAMPTZ   -- UTC-3 (BRT)
   ),
+  -- Event 5: Customs Hold (CURRENT — last event with a date)
   (
-    'Out for Delivery',
-    'Shipment will be delivered to the recipient today.',
-    'Benin City, Nigeria',
-    NULL                         -- upcoming: not yet happened
-  ),
-  (
-    'Delivered',
-    'Shipment successfully delivered to the recipient.',
-    'Benin City, Nigeria',
-    NULL                         -- upcoming: not yet happened
+    'Customs Clearance Required',
+    'Shipment is currently on hold pending customs clearance. Our team is processing the required documentation. No action is needed from the recipient at this time.',
+    'São Paulo, Brazil',
+    '2026-09-20 17:30:00-03'::TIMESTAMPTZ
   )
-) AS e(status, description, location, event_date)
-ON CONFLICT DO NOTHING;
+) AS e(status, description, location, event_date);
 
 
 -- ---------------------------------------------------------------------------
--- 3. VERIFY
+-- STEP 4: Verify — run these SELECTs to confirm the data is correct.
 -- ---------------------------------------------------------------------------
 
--- Check the shipment was inserted:
+-- Shipment row
 SELECT
-  tracking_number, status, status_code,
-  current_location, current_city, current_position
+  tracking_number,
+  status,
+  status_code,
+  current_location,
+  current_city,
+  current_position,
+  origin,
+  destination,
+  service,
+  package_type
 FROM public.shipments
 WHERE tracking_number = 'JDC-2026-00127';
 
--- Check the events were inserted (should return 6 rows):
+-- Tracking events (should return 5 rows, all with non-null event_date)
 SELECT
-  te.status, te.description, te.event_date
+  te.status,
+  te.location,
+  te.event_date
 FROM public.tracking_events te
 JOIN public.shipments s ON te.shipment_id = s.id
 WHERE s.tracking_number = 'JDC-2026-00127'

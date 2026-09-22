@@ -5,11 +5,15 @@
 
 /** Maps statusCode to a colour pair { bg, text } */
 const STATUS_COLOURS = {
-  IN_TRANSIT:       { bg: '#dbeafe', text: '#1e40af', dot: '#2563eb' },
-  OUT_FOR_DELIVERY: { bg: '#fef9c3', text: '#854d0e', dot: '#ca8a04' },
-  DELIVERED:        { bg: '#dcfce7', text: '#166534', dot: '#16a34a' },
-  BOOKED:           { bg: '#f3f4f6', text: '#374151', dot: '#6b7280' },
-  DEFAULT:          { bg: '#f4f5f7', text: '#374151', dot: '#6b7280' },
+  IN_TRANSIT:        { bg: '#dbeafe', text: '#1e40af', dot: '#2563eb' },
+  OUT_FOR_DELIVERY:  { bg: '#fef9c3', text: '#854d0e', dot: '#ca8a04' },
+  DELIVERED:         { bg: '#dcfce7', text: '#166534', dot: '#16a34a' },
+  BOOKED:            { bg: '#f3f4f6', text: '#374151', dot: '#6b7280' },
+  COLLECTED:         { bg: '#e0f2fe', text: '#0369a1', dot: '#0284c7' },
+  ON_HOLD:           { bg: '#ede9fe', text: '#5b21b6', dot: '#7c3aed' },
+  FAILED_DELIVERY:   { bg: '#fee2e2', text: '#991b1b', dot: '#dc2626' },
+  RETURNED:          { bg: '#fce7f3', text: '#9d174d', dot: '#db2777' },
+  DEFAULT:           { bg: '#f4f5f7', text: '#374151', dot: '#6b7280' },
 };
 
 function statusColour(code) {

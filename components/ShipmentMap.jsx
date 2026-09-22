@@ -1,58 +1,77 @@
 /**
- * ShipmentMap — SVG-based shipment route map for Nigeria.
+ * ShipmentMap — SVG-based shipment route map.
  *
  * ARCHITECTURE
  * ────────────────────────────────────────────────────────────────────────────
  * • Pure SVG, zero external dependencies, no API key required.
  * • Real WGS-84 coordinates are projected onto the SVG viewport using a
- *   simple equirectangular projection bounded to Nigeria's bounding box.
- * • The Nigeria outline is a simplified-but-accurate polygon derived from
- *   publicly available geographic data (simplified for performance).
- * • To replace with a live map (e.g. Leaflet, Mapbox): swap this component
- *   with a map library component. The parent passes the same `mapData` prop.
+ *   simple equirectangular projection.
+ * • The bounding box is computed DYNAMICALLY from the shipment's own
+ *   origin + destination coordinates, so the map works for any international
+ *   route (USA → Brazil, Lagos → London, etc.) — not just Nigerian routes.
+ * • A simplified Nigeria polygon is still drawn when the route is domestic
+ *   to Nigeria. For international routes the map shows a clean route on a
+ *   neutral background with city labels.
+ * • To replace with a live map (e.g. Leaflet, Mapbox): swap this component.
+ *   The parent passes the same `mapData` prop shape regardless.
  *
  * PROPS
  * ────────────────────────────────────────────────────────────────────────────
  * mapData: {
- *   originCity:       string   — label for origin pin
- *   destinationCity:  string   — label for destination pin
- *   currentCity:      string   — label for current position
- *   originCoords:     { lat, lng }
- *   destinationCoords:{ lat, lng }
- *   currentPosition:  number 0–1  (0=origin, 1=destination)
+ *   originCity:        string   — label for origin pin
+ *   destinationCity:   string   — label for destination pin
+ *   currentCity:       string   — label for current position
+ *   originCoords:      { lat, lng }
+ *   destinationCoords: { lat, lng }
+ *   currentPosition:   number 0–1  (0=origin, 1=destination)
  * }
- * statusCode: string  — used to colour the truck marker
+ * statusCode: string  — used to colour the position marker
  * ────────────────────────────────────────────────────────────────────────────
  */
-
-/* ── Nigeria bounding box (WGS 84) ──────────────────────────────────────── */
-const BBOX = {
-  minLat:  4.2,
-  maxLat: 13.9,
-  minLng:  2.7,
-  maxLng: 14.7,
-};
 
 /* SVG viewport size */
 const VW = 800;
 const VH = 520;
 
-/* Padding inside viewport (keeps pins away from edge) */
-const PAD = 32;
+/* Minimum padding inside the viewport so pins are never clipped */
+const PAD = 56;
 
 /**
- * Convert geographic coords to SVG pixel coords.
- * Uses equirectangular projection normalised to the Nigeria bounding box.
+ * Build a dynamic bounding box from the two endpoint coordinates.
+ * Adds generous margin so both pins are comfortably inside the viewport.
  */
-function toSVG(lat, lng) {
-  const x = PAD + ((lng - BBOX.minLng) / (BBOX.maxLng - BBOX.minLng)) * (VW - PAD * 2);
-  /* lat is inverted: higher lat = higher up on screen = lower y */
-  const y = PAD + ((BBOX.maxLat - lat) / (BBOX.maxLat - BBOX.minLat)) * (VH - PAD * 2);
+function buildBBox(originCoords, destinationCoords) {
+  const lats = [originCoords.lat, destinationCoords.lat];
+  const lngs = [originCoords.lng, destinationCoords.lng];
+
+  const latSpan = Math.abs(lats[0] - lats[1]);
+  const lngSpan = Math.abs(lngs[0] - lngs[1]);
+
+  /* At minimum keep 8° of span so short-haul routes don't zoom in too hard */
+  const latMargin = Math.max(latSpan * 0.35, 4);
+  const lngMargin = Math.max(lngSpan * 0.35, 4);
+
+  return {
+    minLat: Math.min(...lats) - latMargin,
+    maxLat: Math.max(...lats) + latMargin,
+    minLng: Math.min(...lngs) - lngMargin,
+    maxLng: Math.max(...lngs) + lngMargin,
+  };
+}
+
+/**
+ * Convert geographic coords to SVG pixel coords using the given bounding box.
+ * Uses equirectangular projection.
+ */
+function toSVG(lat, lng, bbox) {
+  const x = PAD + ((lng - bbox.minLng) / (bbox.maxLng - bbox.minLng)) * (VW - PAD * 2);
+  /* lat is inverted: higher lat = higher on screen = lower SVG y */
+  const y = PAD + ((bbox.maxLat - lat) / (bbox.maxLat - bbox.minLat)) * (VH - PAD * 2);
   return { x, y };
 }
 
 /**
- * Linearly interpolate between origin and destination by t (0–1).
+ * Linearly interpolate between origin and destination coords by t (0–1).
  */
 function interpolate(origin, dest, t) {
   return {
@@ -62,9 +81,11 @@ function interpolate(origin, dest, t) {
 }
 
 /* ── Simplified Nigeria outline polygon ─────────────────────────────────────
- * Points are [lng, lat] pairs tracing the approximate country border.
- * Simplified from public domain Natural Earth data at 1:50m resolution.
+ * Drawn only when both origin and destination are inside Nigeria's bbox.
+ * Points are [lng, lat] pairs.
  * ─────────────────────────────────────────────────────────────────────────── */
+const NIGERIA_BBOX = { minLat: 4.2, maxLat: 13.9, minLng: 2.7, maxLng: 14.7 };
+
 const NIGERIA_POLYGON = [
   [2.69,  6.26], [2.75,  6.59], [2.78,  7.25], [3.05,  7.55],
   [3.07,  8.35], [3.10,  9.06], [3.32,  9.45], [3.33, 10.28],
@@ -87,38 +108,24 @@ const NIGERIA_POLYGON = [
   [3.89,  6.36], [3.55,  6.46], [3.37,  6.34], [2.69,  6.26],
 ];
 
-/**
- * Convert the polygon coordinates to an SVG points string.
- */
-function polygonPoints() {
-  return NIGERIA_POLYGON
-    .map(([lng, lat]) => {
-      const { x, y } = toSVG(lat, lng);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
+function isWithinBBox(coords, bbox) {
+  return (
+    coords.lat >= bbox.minLat && coords.lat <= bbox.maxLat &&
+    coords.lng >= bbox.minLng && coords.lng <= bbox.maxLng
+  );
 }
 
-/* ── Major Nigerian cities for the reference grid ───────────────────────── */
-const REFERENCE_CITIES = [
-  { name: 'Lagos',         lat: 6.5244, lng: 3.3792  },
-  { name: 'Abuja',         lat: 9.0765, lng: 7.3986  },
-  { name: 'Kano',          lat: 12.000, lng: 8.5167  },
-  { name: 'Ibadan',        lat: 7.3775, lng: 3.9470  },
-  { name: 'Port Harcourt', lat: 4.8156, lng: 7.0498  },
-  { name: 'Benin City',    lat: 6.3350, lng: 5.6037  },
-  { name: 'Kaduna',        lat: 10.526, lng: 7.4398  },
-  { name: 'Enugu',         lat: 6.4584, lng: 7.5464  },
-  { name: 'Maiduguri',     lat: 11.846, lng: 13.160  },
-  { name: 'Warri',         lat: 5.5167, lng: 5.7500  },
-];
-
-/* Status colours for the truck marker */
-const TRUCK_COLOUR = {
-  IN_TRANSIT:       '#c0392b',
-  OUT_FOR_DELIVERY: '#ca8a04',
-  DELIVERED:        '#16a34a',
-  DEFAULT:          '#0a1f3c',
+/* Status colours for the position marker */
+const MARKER_COLOUR = {
+  IN_TRANSIT:        '#c0392b',
+  OUT_FOR_DELIVERY:  '#ca8a04',
+  DELIVERED:         '#16a34a',
+  ON_HOLD:           '#7c3aed',  /* purple — distinct from transit colours */
+  COLLECTED:         '#0369a1',
+  BOOKED:            '#64748b',
+  FAILED_DELIVERY:   '#dc2626',
+  RETURNED:          '#9f1239',
+  DEFAULT:           '#0a1f3c',
 };
 
 export default function ShipmentMap({ mapData, statusCode }) {
@@ -129,33 +136,60 @@ export default function ShipmentMap({ mapData, statusCode }) {
     originCoords, destinationCoords, currentPosition,
   } = mapData;
 
-  /* Project all key points */
-  const originPt  = toSVG(originCoords.lat,      originCoords.lng);
-  const destPt    = toSVG(destinationCoords.lat,  destinationCoords.lng);
+  /* ── Build dynamic bounding box from this shipment's actual coordinates ── */
+  const bbox = buildBBox(originCoords, destinationCoords);
+
+  /* ── Project all key points into SVG space ────────────────────────────── */
+  const originPt  = toSVG(originCoords.lat,     originCoords.lng,     bbox);
+  const destPt    = toSVG(destinationCoords.lat, destinationCoords.lng, bbox);
 
   const currentCoords = interpolate(originCoords, destinationCoords, currentPosition);
-  const currentPt = toSVG(currentCoords.lat, currentCoords.lng);
+  const currentPt     = toSVG(currentCoords.lat, currentCoords.lng, bbox);
 
-  const truckColour = TRUCK_COLOUR[statusCode] || TRUCK_COLOUR.DEFAULT;
-  const polyPoints  = polygonPoints();
+  const markerColour = MARKER_COLOUR[statusCode] || MARKER_COLOUR.DEFAULT;
 
-  /* Build a smooth cubic bezier path for the route.
-     Control point is perpendicular to the midpoint for a gentle curve. */
+  /* ── Route path (quadratic bezier for gentle curve) ─────────────────── */
   const midX = (originPt.x + destPt.x) / 2;
   const midY = (originPt.y + destPt.y) / 2;
   const dx   = destPt.x - originPt.x;
   const dy   = destPt.y - originPt.y;
-  /* Curve the line slightly away from the straight path */
   const cpX  = midX - dy * 0.18;
   const cpY  = midY + dx * 0.18;
 
   const routePath = `M ${originPt.x} ${originPt.y} Q ${cpX} ${cpY} ${destPt.x} ${destPt.y}`;
 
-  /* Progress dashes: we draw the "completed" part of the route in solid navy,
-     and the remaining portion in a lighter dashed line. */
-  const totalLen = Math.hypot(destPt.x - originPt.x, destPt.y - originPt.y) * 1.05;
-  const completedLen  = totalLen * currentPosition;
-  const remainingLen  = totalLen * (1 - currentPosition);
+  /* Approximate arc length for dash-array progress indicator */
+  const totalLen     = Math.hypot(destPt.x - originPt.x, destPt.y - originPt.y) * 1.1;
+  const completedLen = totalLen * Math.max(0, Math.min(1, currentPosition));
+  const remainingLen = totalLen * (1 - Math.max(0, Math.min(1, currentPosition)));
+
+  /* ── Decide whether to draw the Nigeria polygon ──────────────────────── */
+  const drawNigeria = (
+    isWithinBBox(originCoords, NIGERIA_BBOX) &&
+    isWithinBBox(destinationCoords, NIGERIA_BBOX)
+  );
+
+  const nigeriaPoints = drawNigeria
+    ? NIGERIA_POLYGON.map(([lng, lat]) => {
+        const { x, y } = toSVG(lat, lng, bbox);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ')
+    : null;
+
+  /* ── Grid line intervals — auto-select based on bbox span ───────────── */
+  const latSpan = bbox.maxLat - bbox.minLat;
+  const lngSpan = bbox.maxLng - bbox.minLng;
+  const latStep = latSpan > 40 ? 10 : latSpan > 20 ? 5 : latSpan > 8 ? 2 : 1;
+  const lngStep = lngSpan > 40 ? 10 : lngSpan > 20 ? 5 : lngSpan > 8 ? 2 : 1;
+
+  const latLines = [];
+  for (let lat = Math.ceil(bbox.minLat / latStep) * latStep; lat <= bbox.maxLat; lat += latStep) {
+    latLines.push(lat);
+  }
+  const lngLines = [];
+  for (let lng = Math.ceil(bbox.minLng / lngStep) * lngStep; lng <= bbox.maxLng; lng += lngStep) {
+    lngLines.push(lng);
+  }
 
   return (
     <div style={{
@@ -165,7 +199,8 @@ export default function ShipmentMap({ mapData, statusCode }) {
       overflow: 'hidden',
       marginBottom: '24px',
     }}>
-      {/* ── Map header bar ─────────────────────────────────────────── */}
+
+      {/* ── Map header bar ────────────────────────────────────────── */}
       <div style={{
         backgroundColor: '#0a1f3c',
         padding: '14px 20px',
@@ -183,7 +218,6 @@ export default function ShipmentMap({ mapData, statusCode }) {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          {/* Legend */}
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#94a3b8' }}>
             <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block' }} />
             Origin
@@ -193,13 +227,13 @@ export default function ShipmentMap({ mapData, statusCode }) {
             Destination
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#94a3b8' }}>
-            <i className="fa-solid fa-truck" style={{ fontSize: '12px', color: truckColour }} />
+            <i className="fa-solid fa-circle-dot" style={{ fontSize: '12px', color: markerColour }} />
             Current
           </span>
         </div>
       </div>
 
-      {/* ── Route summary strip ────────────────────────────────────── */}
+      {/* ── Route summary strip ───────────────────────────────────── */}
       <div style={{
         backgroundColor: '#f4f5f7',
         borderBottom: '1px solid #e2e6ea',
@@ -212,9 +246,9 @@ export default function ShipmentMap({ mapData, statusCode }) {
       }}>
         <span style={{ fontWeight: 700, color: '#0a1f3c' }}>{originCity}</span>
         <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ flex: 1, height: '1px', width: '40px', backgroundColor: '#d1d5db', display: 'inline-block' }} />
-          <i className="fa-solid fa-truck" style={{ fontSize: '12px', color: truckColour }} />
-          <span style={{ flex: 1, height: '1px', width: '40px', backgroundColor: '#d1d5db', display: 'inline-block' }} />
+          <span style={{ height: '1px', width: '32px', backgroundColor: '#d1d5db', display: 'inline-block' }} />
+          <i className="fa-solid fa-plane" style={{ fontSize: '11px', color: markerColour }} />
+          <span style={{ height: '1px', width: '32px', backgroundColor: '#d1d5db', display: 'inline-block' }} />
         </span>
         <span style={{ fontWeight: 700, color: '#0a1f3c' }}>{destinationCity}</span>
         <span style={{ marginLeft: 'auto', color: '#64748b' }}>
@@ -222,28 +256,28 @@ export default function ShipmentMap({ mapData, statusCode }) {
         </span>
       </div>
 
-      {/* ── SVG Map ────────────────────────────────────────────────── */}
+      {/* ── SVG Map ───────────────────────────────────────────────── */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
         <svg
           viewBox={`0 0 ${VW} ${VH}`}
           style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '480px' }}
-          aria-label={`Shipment route map from ${originCity} to ${destinationCity}`}
+          aria-label={`Shipment route from ${originCity} to ${destinationCity}`}
           role="img"
         >
-          {/* ── Map background ───────────────────────────────────── */}
+          {/* Background */}
           <rect width={VW} height={VH} fill="#eef2f7" />
 
-          {/* ── Simple grid lines for geographic context ─────────── */}
-          {[5, 7, 9, 11, 13].map(lat => {
-            const { y } = toSVG(lat, BBOX.minLng);
+          {/* Grid lines */}
+          {latLines.map(lat => {
+            const { y } = toSVG(lat, bbox.minLng, bbox);
             return (
               <line key={`lat-${lat}`}
                 x1={PAD} y1={y} x2={VW - PAD} y2={y}
                 stroke="#dde3eb" strokeWidth="0.5" />
             );
           })}
-          {[4, 6, 8, 10, 12, 14].map(lng => {
-            const { x } = toSVG(BBOX.minLat, lng);
+          {lngLines.map(lng => {
+            const { x } = toSVG(bbox.minLat, lng, bbox);
             return (
               <line key={`lng-${lng}`}
                 x1={x} y1={PAD} x2={x} y2={VH - PAD}
@@ -251,37 +285,18 @@ export default function ShipmentMap({ mapData, statusCode }) {
             );
           })}
 
-          {/* ── Nigeria country polygon ───────────────────────────── */}
-          <polygon
-            points={polyPoints}
-            fill="#dce8f5"
-            stroke="#b0c4d8"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
+          {/* Nigeria polygon — only for domestic Nigerian routes */}
+          {drawNigeria && nigeriaPoints && (
+            <polygon
+              points={nigeriaPoints}
+              fill="#dce8f5"
+              stroke="#b0c4d8"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+          )}
 
-          {/* ── Reference city dots (unrelated to shipment) ──────── */}
-          {REFERENCE_CITIES.map(city => {
-            const p = toSVG(city.lat, city.lng);
-            const isKey = city.name === originCity || city.name === destinationCity;
-            if (isKey) return null; /* drawn separately below */
-            return (
-              <g key={city.name}>
-                <circle cx={p.x} cy={p.y} r={3} fill="#8faec8" />
-                <text
-                  x={p.x + 5} y={p.y + 4}
-                  fontSize="9"
-                  fill="#5a7a96"
-                  fontFamily="Inter, Arial, sans-serif"
-                  style={{ pointerEvents: 'none', userSelect: 'none' }}
-                >
-                  {city.name}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* ── Dashed remaining route ───────────────────────────── */}
+          {/* Dashed remaining route */}
           <path
             d={routePath}
             fill="none"
@@ -291,7 +306,7 @@ export default function ShipmentMap({ mapData, statusCode }) {
             strokeLinecap="round"
           />
 
-          {/* ── Solid completed route ────────────────────────────── */}
+          {/* Solid completed route */}
           <path
             d={routePath}
             fill="none"
@@ -301,20 +316,19 @@ export default function ShipmentMap({ mapData, statusCode }) {
             strokeDasharray={`${completedLen} ${remainingLen + 9999}`}
           />
 
-          {/* ── Origin marker ────────────────────────────────────── */}
+          {/* ── Origin marker ─────────────────────────────────────── */}
           <g>
-            <circle cx={originPt.x} cy={originPt.y} r={12} fill="#22c55e" opacity="0.15" />
+            <circle cx={originPt.x} cy={originPt.y} r={13} fill="#22c55e" opacity="0.15" />
             <circle cx={originPt.x} cy={originPt.y} r={7}  fill="#22c55e" />
             <circle cx={originPt.x} cy={originPt.y} r={3}  fill="#ffffff" />
-            {/* Label bubble */}
             <rect
-              x={originPt.x + 12} y={originPt.y - 13}
-              width={originCity.length * 6.8 + 14} height={22}
+              x={originPt.x + 13} y={originPt.y - 14}
+              width={originCity.length * 6.5 + 14} height={24}
               rx="3" ry="3"
-              fill="#0a1f3c" opacity="0.9"
+              fill="#0a1f3c" opacity="0.92"
             />
             <text
-              x={originPt.x + 19} y={originPt.y + 2}
+              x={originPt.x + 20} y={originPt.y + 2}
               fontSize="10.5" fontWeight="700"
               fill="#ffffff"
               fontFamily="Inter, Arial, sans-serif"
@@ -323,8 +337,8 @@ export default function ShipmentMap({ mapData, statusCode }) {
               {originCity}
             </text>
             <text
-              x={originPt.x + 19} y={originPt.y + 14}
-              fontSize="8.5"
+              x={originPt.x + 20} y={originPt.y + 14}
+              fontSize="8"
               fill="#94a3b8"
               fontFamily="Inter, Arial, sans-serif"
               style={{ pointerEvents: 'none', userSelect: 'none' }}
@@ -333,24 +347,24 @@ export default function ShipmentMap({ mapData, statusCode }) {
             </text>
           </g>
 
-          {/* ── Destination marker ───────────────────────────────── */}
+          {/* ── Destination marker ────────────────────────────────── */}
           <g>
-            <circle cx={destPt.x} cy={destPt.y} r={12} fill="#c0392b" opacity="0.15" />
+            <circle cx={destPt.x} cy={destPt.y} r={13} fill="#c0392b" opacity="0.15" />
             <circle cx={destPt.x} cy={destPt.y} r={7}  fill="#c0392b" />
             <circle cx={destPt.x} cy={destPt.y} r={3}  fill="#ffffff" />
-            {/* Label — placed to the left if close to right edge */}
             {(() => {
-              const labelWidth = destinationCity.length * 6.8 + 14;
-              const labelX = destPt.x > VW - labelWidth - 40
+              const labelWidth = destinationCity.length * 6.5 + 14;
+              /* Place label to the left if close to the right edge */
+              const labelX = destPt.x > VW - labelWidth - 60
                 ? destPt.x - labelWidth - 14
-                : destPt.x + 12;
+                : destPt.x + 13;
               return (
                 <>
                   <rect
-                    x={labelX} y={destPt.y - 13}
-                    width={labelWidth} height={22}
+                    x={labelX} y={destPt.y - 14}
+                    width={labelWidth} height={24}
                     rx="3" ry="3"
-                    fill="#c0392b" opacity="0.9"
+                    fill="#c0392b" opacity="0.92"
                   />
                   <text
                     x={labelX + 7} y={destPt.y + 2}
@@ -363,8 +377,8 @@ export default function ShipmentMap({ mapData, statusCode }) {
                   </text>
                   <text
                     x={labelX + 7} y={destPt.y + 14}
-                    fontSize="8.5"
-                    fill="rgba(255,255,255,0.7)"
+                    fontSize="8"
+                    fill="rgba(255,255,255,0.75)"
                     fontFamily="Inter, Arial, sans-serif"
                     style={{ pointerEvents: 'none', userSelect: 'none' }}
                   >
@@ -375,40 +389,38 @@ export default function ShipmentMap({ mapData, statusCode }) {
             })()}
           </g>
 
-          {/* ── Current position truck marker ────────────────────── */}
+          {/* ── Current position marker ───────────────────────────── */}
           <g>
-            {/* Pulse ring */}
-            <circle cx={currentPt.x} cy={currentPt.y} r={18} fill={truckColour} opacity="0.12" />
-            <circle cx={currentPt.x} cy={currentPt.y} r={12} fill={truckColour} opacity="0.20" />
-            {/* White backing circle */}
+            <circle cx={currentPt.x} cy={currentPt.y} r={20} fill={markerColour} opacity="0.10" />
+            <circle cx={currentPt.x} cy={currentPt.y} r={13} fill={markerColour} opacity="0.18" />
             <circle cx={currentPt.x} cy={currentPt.y} r={13}
-              fill="#ffffff" stroke={truckColour} strokeWidth="2.5" />
-            {/* Truck icon as text (Font Awesome unicode) */}
+              fill="#ffffff" stroke={markerColour} strokeWidth="2.5" />
+            {/* Location pin icon (Font Awesome \uf3c5 = fa-location-dot) */}
             <text
               x={currentPt.x} y={currentPt.y + 5}
               textAnchor="middle"
               fontSize="13"
-              fill={truckColour}
+              fill={markerColour}
               fontFamily="'Font Awesome 6 Free'"
               fontWeight="900"
               style={{ pointerEvents: 'none', userSelect: 'none' }}
             >
-              {'\uf0d1'}
+              {'\uf3c5'}
             </text>
           </g>
 
-          {/* ── Progress percentage label ─────────────────────────── */}
+          {/* Progress % badge */}
           <g>
             <rect
-              x={currentPt.x - 22} y={currentPt.y + 17}
-              width={44} height={16}
-              rx="2" ry="2"
-              fill={truckColour}
+              x={currentPt.x - 24} y={currentPt.y + 18}
+              width={48} height={16}
+              rx="3" ry="3"
+              fill={markerColour}
             />
             <text
-              x={currentPt.x} y={currentPt.y + 29}
+              x={currentPt.x} y={currentPt.y + 30}
               textAnchor="middle"
-              fontSize="9.5" fontWeight="700"
+              fontSize="9" fontWeight="700"
               fill="#ffffff"
               fontFamily="Inter, Arial, sans-serif"
               style={{ pointerEvents: 'none', userSelect: 'none' }}
@@ -419,7 +431,7 @@ export default function ShipmentMap({ mapData, statusCode }) {
         </svg>
       </div>
 
-      {/* ── Map footer — location pill ─────────────────────────────── */}
+      {/* ── Map footer ────────────────────────────────────────────── */}
       <div style={{
         backgroundColor: '#f4f5f7',
         borderTop: '1px solid #e2e6ea',
@@ -430,7 +442,7 @@ export default function ShipmentMap({ mapData, statusCode }) {
         fontSize: '12px',
         color: '#4a5568',
       }}>
-        <i className="fa-solid fa-location-dot" style={{ color: truckColour, fontSize: '12px' }} />
+        <i className="fa-solid fa-location-dot" style={{ color: markerColour, fontSize: '12px' }} />
         <span>
           <strong style={{ color: '#0a1f3c' }}>Current location:</strong>{' '}
           {currentCity}
