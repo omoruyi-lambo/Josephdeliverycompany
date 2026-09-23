@@ -442,3 +442,80 @@ CREATE POLICY "Admins can update all profiles"
 --
 -- 5. Proceed to Phase 2: connect lib/trackingData.js to Supabase
 -- =============================================================================
+
+
+-- =============================================================================
+-- LOCATIONS TABLE (added for global offices page)
+-- =============================================================================
+-- Replaces the static OFFICES array in pages/locations.js when the admin
+-- dashboard phase is complete. The locations page will query this table.
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS public.locations (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  country       TEXT        NOT NULL,
+  country_code  TEXT        NOT NULL,           -- ISO 3166-1 alpha-2, e.g. 'US'
+  region        TEXT        NOT NULL,           -- 'Americas' | 'Asia-Pacific' | 'Europe'
+  city          TEXT        NOT NULL,
+
+  office_name   TEXT        NOT NULL DEFAULT '',
+  office_type   TEXT        NOT NULL DEFAULT 'Regional Office',
+
+  -- Contact — store empty string if unconfirmed rather than fake data
+  address       TEXT        NOT NULL DEFAULT '',
+  phone         TEXT        NOT NULL DEFAULT '',
+  email         TEXT        NOT NULL DEFAULT '',
+  opening_hours TEXT        NOT NULL DEFAULT '',
+
+  -- Map coordinates (WGS-84)
+  latitude      NUMERIC(9,6),
+  longitude     NUMERIC(9,6),
+
+  -- Photographic image for the location card
+  image_url     TEXT        NOT NULL DEFAULT '',
+  image_alt     TEXT        NOT NULL DEFAULT '',
+
+  description   TEXT        NOT NULL DEFAULT '',
+
+  -- Admin toggle — only active locations are shown on the public site
+  is_active     BOOLEAN     NOT NULL DEFAULT true,
+
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- updated_at trigger
+CREATE TRIGGER locations_updated_at
+  BEFORE UPDATE ON public.locations
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_locations_country    ON public.locations (country);
+CREATE INDEX IF NOT EXISTS idx_locations_region     ON public.locations (region);
+CREATE INDEX IF NOT EXISTS idx_locations_is_active  ON public.locations (is_active);
+
+-- Row Level Security
+ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
+
+-- Public can read active locations
+CREATE POLICY "Public can read active locations"
+  ON public.locations
+  FOR SELECT
+  USING (is_active = true);
+
+-- Only admins can manage locations
+CREATE POLICY "Admins can insert locations"
+  ON public.locations FOR INSERT TO authenticated
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins can update locations"
+  ON public.locations FOR UPDATE TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins can delete locations"
+  ON public.locations FOR DELETE TO authenticated
+  USING (public.is_admin());
+
+COMMENT ON TABLE public.locations IS 'International office locations. Managed via admin dashboard. Replaces static OFFICES array in pages/locations.js.';

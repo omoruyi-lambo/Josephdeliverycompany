@@ -1,6 +1,10 @@
 import '@/styles/globals.css';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
+
+/* Chatbot is client-only (uses browser APIs) — load with no SSR */
+const Chatbot = dynamic(() => import('../components/Chatbot'), { ssr: false });
 
 /* ── Preloader ────────────────────────────────────────────────────────────
    Mounts only on the homepage. Starts fully visible (covers page) and
@@ -179,6 +183,7 @@ export default function App({ Component, pageProps }) {
     <>
       {isHome && <Preloader />}
       <Component {...pageProps} />
+      <Chatbot />
     </>
   );
 }
