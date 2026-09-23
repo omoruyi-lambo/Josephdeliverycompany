@@ -156,7 +156,7 @@ export default function SignUpPage() {
               </div>
 
               <Field label="Email Address" name="email" type="email" value={form.email} onChange={handleChange} error={errors.email} placeholder="john@example.com" mb="20px" />
-              <Field label="Phone Number" name="phone" type="tel" value={form.phone} onChange={handleChange} error={errors.phone} placeholder="+234 800 000 0000" mb="20px" />
+              <Field label="Phone Number" name="phone" type="tel" value={form.phone} onChange={handleChange} error={errors.phone} placeholder="+1 (305) 555-0100" mb="20px" />
               <Field label="Password" name="password" type="password" value={form.password} onChange={handleChange} error={errors.password} placeholder="Min. 8 characters" mb="20px" />
               <Field label="Confirm Password" name="confirm" type="password" value={form.confirm} onChange={handleChange} error={errors.confirm} placeholder="Re-enter password" mb="24px" />
 

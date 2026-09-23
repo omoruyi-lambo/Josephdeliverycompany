@@ -11,7 +11,7 @@ const SECTIONS = [
       { q: 'How do I track my shipment?', a: 'Go to josephdeliverycompany.com/track and enter your tracking number (format: JDC-YYYY-XXXXX). You\'ll see the full journey with timestamps at every checkpoint.' },
       { q: 'Why hasn\'t my tracking updated?', a: 'Tracking updates at key scan points — pickup, hub arrival, out for delivery, and delivered. If 24 hours have passed without an update on a domestic shipment, contact our support team.' },
       { q: 'What do the tracking statuses mean?', a: 'Booked: order confirmed. Collected: parcel picked up. In Transit: moving through our network. Out for Delivery: courier is on the way. Delivered: parcel received. Failed Delivery: recipient unavailable — re-delivery or depot hold will follow.' },
-      { q: 'Can I track via SMS?', a: 'Yes. Text your tracking number to +234 801 234 5678 and we\'ll reply with the current status within minutes.' },
+      { q: 'Can I track via SMS?', a: 'Yes. Text your tracking number to +1 (305) 555-0192 and we\'ll reply with the current status within minutes.' },
     ],
   },
   {

@@ -5,9 +5,9 @@ import Link from 'next/link';
    All contact info is centralised here for easy future updates.
    ─────────────────────────────────────────────────────────────────────── */
 const CONTACT = {
-  phone: '+234 801 234 5678',
+  phone: '+1 (305) 555-0192',
   email: 'info@josephdeliverycompany.com',
-  address: '123 Logistics Road, Lagos, Nigeria',
+  address: '1221 Brickell Ave, Miami, FL 33131, USA',
 };
 
 const FOOTER_LINKS = [

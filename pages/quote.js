@@ -277,7 +277,7 @@ export default function QuotePage() {
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                         <QField label="Email" name="email" type="email" value={form.email} onChange={(v) => update('email', v)} error={errors.email} placeholder="john@example.com" />
-                        <QField label="Phone" name="phone" type="tel" value={form.phone} onChange={(v) => update('phone', v)} error={errors.phone} placeholder="+234 800 000 0000" />
+                        <QField label="Phone" name="phone" type="tel" value={form.phone} onChange={(v) => update('phone', v)} error={errors.phone} placeholder="+1 (305) 555-0100" />
                       </div>
 
                       <div style={{ marginBottom: '24px' }}>

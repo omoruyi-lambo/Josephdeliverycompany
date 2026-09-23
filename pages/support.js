@@ -4,9 +4,9 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 const CHANNELS = [
-  { icon: 'fa-solid fa-phone', title: 'Phone Support', detail: '+234 801 234 5678', sub: 'Available 24/7 for urgent issues', href: 'tel:+2348012345678', cta: 'Call Now' },
+  { icon: 'fa-solid fa-phone', title: 'Phone Support', detail: '+1 (305) 555-0192', sub: 'Available 24/7 for urgent issues', href: 'tel:+13055550192', cta: 'Call Now' },
   { icon: 'fa-solid fa-envelope', title: 'Email Support', detail: 'support@josephdeliverycompany.com', sub: 'Response within 2 business hours', href: 'mailto:support@josephdeliverycompany.com', cta: 'Send Email' },
-  { icon: 'fa-brands fa-whatsapp', title: 'WhatsApp', detail: '+234 801 234 5678', sub: 'Chat with a logistics agent instantly', href: 'https://wa.me/2348012345678', cta: 'Open Chat' },
+  { icon: 'fa-brands fa-whatsapp', title: 'WhatsApp', detail: '+1 (305) 555-0192', sub: 'Chat with a logistics agent instantly', href: 'https://wa.me/13055550192', cta: 'Open Chat' },
   { icon: 'fa-solid fa-comment-dots', title: 'Live Chat', detail: 'On-site chat widget', sub: 'Click the icon at the bottom right', href: '#', cta: 'Start Chat' },
 ];
 

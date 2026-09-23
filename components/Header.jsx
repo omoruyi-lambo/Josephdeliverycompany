@@ -42,7 +42,7 @@ export default function Header() {
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <i className="fa-solid fa-phone" style={{ fontSize: '10px', color: '#c0392b' }} />
-            +234 801 234 5678
+            +1 (305) 555-0192
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <i className="fa-solid fa-envelope" style={{ fontSize: '10px', color: '#c0392b' }} />

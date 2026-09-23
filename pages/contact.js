@@ -71,7 +71,7 @@ export default function ContactPage() {
                 <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0a1f3c', marginBottom: 24 }}>Send a Message</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <Field label="Full Name" name="name" value={form.name} onChange={handle} error={errors.name} placeholder="John Doe" />
-                  <Field label="Phone" name="phone" type="tel" value={form.phone} onChange={handle} placeholder="+234 800 000 0000" />
+                  <Field label="Phone" name="phone" type="tel" value={form.phone} onChange={handle} placeholder="+1 (305) 555-0100" />
                 </div>
                 <Field label="Email" name="email" type="email" value={form.email} onChange={handle} error={errors.email} placeholder="john@example.com" mb={16} />
                 <Field label="Subject" name="subject" value={form.subject} onChange={handle} error={errors.subject} placeholder="Re: Tracking number JDC-2026-00127" mb={16} />
@@ -93,7 +93,7 @@ export default function ContactPage() {
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {[
-              { icon: 'fa-solid fa-phone', title: 'Phone', lines: ['+234 801 234 5678', '24/7 for urgent issues'] },
+              { icon: 'fa-solid fa-phone', title: 'Phone', lines: ['+1 (305) 555-0192', '24/7 for urgent issues'] },
               { icon: 'fa-solid fa-envelope', title: 'Email', lines: ['info@josephdeliverycompany.com', 'support@josephdeliverycompany.com'] },
               { icon: 'fa-solid fa-location-dot', title: 'Head Office', lines: ['14 Marina Street', 'Lagos Island, Lagos, Nigeria'] },
               { icon: 'fa-regular fa-clock', title: 'Office Hours', lines: ['Mon–Fri: 7am – 9pm', 'Sat: 8am – 6pm · Sun: 10am – 4pm'] },

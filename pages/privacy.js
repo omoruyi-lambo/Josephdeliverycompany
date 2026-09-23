@@ -38,7 +38,7 @@ const SECTIONS = [
   },
   {
     title: '9. Contact',
-    body: `For privacy-related questions or requests, contact our Data Protection Officer at:\n\nprivacy@josephdeliverycompany.com\n14 Marina Street, Lagos Island, Lagos, Nigeria\n+234 801 234 5678`,
+    body: `For privacy-related questions or requests, contact our Data Protection Officer at:\n\nprivacy@josephdeliverycompany.com\n1221 Brickell Ave, Miami, FL 33131, USA\n+1 (305) 555-0192`,
   },
 ];
 
