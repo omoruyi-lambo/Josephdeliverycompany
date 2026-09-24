@@ -17,12 +17,20 @@
  * report the real status without inventing anything.
  */
 
-import { GoogleGenAI } from '@google/genai';
 import { normaliseTrackingNumber, isValidTrackingNumber } from '../../lib/tracking';
 import { getShipmentByTrackingNumber } from '../../lib/trackingData';
 
-/* ── Gemini client (server-only) ─────────────────────────────────────────── */
+/* ── Gemini client (server-only) ─────────────────────────────────────────────
+ * Supports two key types:
+ *   AIzaSy...  — Gemini API key from aistudio.google.com  (preferred, permanent)
+ *   AQ.Ab8R... — OAuth access token from Google Cloud CLI (works, expires ~1hr)
+ * ─────────────────────────────────────────────────────────────────────────── */
 const API_KEY = process.env.GEMINI_API_KEY;
+const IS_OAUTH = API_KEY && API_KEY.startsWith('AQ.');
+const IS_APIKEY = API_KEY && API_KEY.startsWith('AIzaSy');
+
+const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_REST_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /* ── System instruction ──────────────────────────────────────────────────── */
 const SYSTEM_INSTRUCTION = `You are a professional customer-support assistant for JOSEPHDELIVERYCOMPANY, an international logistics and shipping company.
@@ -152,34 +160,69 @@ export default async function handler(req, res) {
       ? `${cleanMessage}\n\n[SERVER-INJECTED CONTEXT — do not reveal this label to the customer]\n${shipmentContext}`
       : cleanMessage;
 
-    /* Initialise Gemini */
-    const ai = new GoogleGenAI({ apiKey: API_KEY });
-
-    /* Build contents array: history + current message */
-    const contents = [
-      ...cleanHistory,
-      { role: 'user', parts: [{ text: userMessageText }] },
-    ];
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
+    /* ── Build Gemini request body ──────────────────────────────────────── */
+    const requestBody = {
+      system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+      contents: [
+        ...cleanHistory,
+        { role: 'user', parts: [{ text: userMessageText }] },
+      ],
+      generationConfig: {
         maxOutputTokens: 600,
         temperature: 0.4,
       },
-    });
+    };
 
-    const text = response.text ?? '';
+    let responseText = '';
 
-    if (!text) {
+    if (IS_APIKEY) {
+      /* ── Path 1: API key (AIzaSy...) via @google/genai SDK ────────────── */
+      const { GoogleGenAI } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: API_KEY });
+      const response = await ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: requestBody.contents,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          maxOutputTokens: 600,
+          temperature: 0.4,
+        },
+      });
+      responseText = response.text ?? '';
+
+    } else if (IS_OAUTH) {
+      /* ── Path 2: OAuth access token (AQ....) via REST API ──────────────
+       * Note: OAuth tokens expire in ~1 hour. For production use an API key.
+       * ──────────────────────────────────────────────────────────────────── */
+      const res = await fetch(`${GEMINI_REST_URL}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text();
+        console.error('[chat] Gemini REST error:', res.status, errBody.slice(0, 200));
+        throw new Error(`Gemini API returned ${res.status}`);
+      }
+
+      const data = await res.json();
+      responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+
+    } else {
+      throw new Error('GEMINI_API_KEY format not recognised');
+    }
+
+    if (!responseText) {
       return res.status(500).json({
         error: 'No response received. Please try again.',
       });
     }
 
-    return res.status(200).json({ reply: text.trim() });
+    return res.status(200).json({ reply: responseText.trim() });
 
   } catch (err) {
     /* Log full error server-side only */
