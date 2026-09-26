@@ -8,7 +8,7 @@ export default function InternationalPage() {
       heroDesc="Send parcels, documents, and commercial cargo to over 180 countries. We handle customs documentation, duties, and clearance so you do not have to."
       imgSrc="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1400&q=80"
       imgAlt="Commercial aircraft on tarmac representing international air freight"
-      price="From &#8358;18,000"
+      price="From $149"
       deliveryTime="5&#8211;14 Business Days"
       metaDesc="International shipping from Nigeria to 180+ countries. Full customs support, door-to-door delivery, and real-time tracking."
       features={[

@@ -37,6 +37,7 @@ const mobileAuthButtonStyle = {
 };
 
 export default function Header() {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [auth, setAuth] = useState({ user: null, profile: null });
 

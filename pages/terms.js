@@ -18,11 +18,11 @@ const SECTIONS = [
   },
   {
     title: '4. Pricing and Payment',
-    body: `Prices are calculated at the time of booking based on weight, dimensions, service type, and destination. All prices are in Nigerian Naira (₦) unless otherwise stated. Payment is due at the time of booking unless you hold a credit account.\n\nWe reserve the right to apply surcharges for remote areas, oversize items, fuel, or security screening.`,
+    body: `Prices are calculated at the time of booking based on weight, dimensions, service type, and destination. All prices are in United States Dollars (USD, $) unless otherwise stated. Payment is due at the time of booking unless you hold a credit account.\n\nWe reserve the right to apply surcharges for remote areas, oversize items, fuel, or security screening.`,
   },
   {
     title: '5. Liability',
-    body: `Our liability for lost or damaged shipments is limited to ₦50,000 per shipment unless extended insurance is purchased at checkout. We are not liable for indirect or consequential losses, including loss of business or income.\n\nWe are not liable for delays caused by circumstances beyond our reasonable control, including weather, industrial action, or customs delays.`,
+    body: `Our liability for lost or damaged shipments is limited to $500 per shipment unless extended insurance is purchased at checkout. We are not liable for indirect or consequential losses, including loss of business or income.\n\nWe are not liable for delays caused by circumstances beyond our reasonable control, including weather, industrial action, or customs delays.`,
   },
   {
     title: '6. Claims',
@@ -57,8 +57,15 @@ export default function TermsPage() {
       </Head>
       <Header />
 
-      <section style={{ backgroundColor: '#0a1f3c', padding: '64px 24px 56px' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '64px 24px 56px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1800&q=80"
+          alt="Legal terms and contract documentation"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.28 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.84)' }} />
+        <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
           <p style={eyebrow}>Legal</p>
           <h1 style={{ fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1 }}>Terms of Service</h1>
           <p style={{ fontSize: 13, color: '#94a3b8' }}>Last updated: 1 January 2026</p>

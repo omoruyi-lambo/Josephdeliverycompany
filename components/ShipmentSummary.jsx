@@ -10,7 +10,7 @@ const STATUS_COLOURS = {
   DELIVERED:         { bg: '#dcfce7', text: '#166534', dot: '#16a34a' },
   BOOKED:            { bg: '#f3f4f6', text: '#374151', dot: '#6b7280' },
   COLLECTED:         { bg: '#e0f2fe', text: '#0369a1', dot: '#0284c7' },
-  ON_HOLD:           { bg: '#ede9fe', text: '#5b21b6', dot: '#7c3aed' },
+  ON_HOLD:           { bg: '#fee2e2', text: '#991b1b', dot: '#c0392b' },
   FAILED_DELIVERY:   { bg: '#fee2e2', text: '#991b1b', dot: '#dc2626' },
   RETURNED:          { bg: '#fce7f3', text: '#9d174d', dot: '#db2777' },
   DEFAULT:           { bg: '#f4f5f7', text: '#374151', dot: '#6b7280' },

@@ -14,7 +14,7 @@ const ROLES = [
 
 const PERKS = [
   { icon: 'fa-solid fa-heart-pulse', title: 'Health Insurance', desc: 'Comprehensive HMO cover for you and your dependants.' },
-  { icon: 'fa-solid fa-graduation-cap', title: 'Learning Budget', desc: '₦200,000 annual training and development allowance.' },
+  { icon: 'fa-solid fa-graduation-cap', title: 'Learning Budget', desc: '$1,500 annual training and development allowance.' },
   { icon: 'fa-solid fa-laptop', title: 'Equipment Provided', desc: 'MacBook or equivalent provided for all tech and office roles.' },
   { icon: 'fa-solid fa-plane', title: 'Remote Flexibility', desc: 'Hybrid and remote options available for eligible roles.' },
   { icon: 'fa-solid fa-chart-line', title: 'Equity & Bonuses', desc: 'Performance bonuses and company equity for senior staff.' },
@@ -32,8 +32,15 @@ export default function CareersPage() {
       </Head>
       <Header />
 
-      <section style={{ backgroundColor: '#0a1f3c', padding: '80px 24px 72px' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '80px 24px 72px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1800&q=80"
+          alt="Josephdeliverycompany team collaborating in a modern logistics office"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.82)' }} />
+        <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
           <p style={eyebrow}>Careers</p>
           <h1 style={{ fontSize: 'clamp(30px,5vw,52px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 18, lineHeight: 1.08 }}>
             Build the Future of<br />Nigerian Logistics

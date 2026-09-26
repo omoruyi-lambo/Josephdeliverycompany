@@ -1,11 +1,11 @@
 /**
- * pages/api/chat.js — Server-side Gemini chat API route
+ * pages/api/chat.js — Server-side OpenRouter chat API route
  *
  * SECURITY
  * ─────────────────────────────────────────────────────────────────────────────
- * • GEMINI_API_KEY lives only here — never sent to the browser.
+ * • OPENROUTER_API_KEY lives only here — never sent to the browser.
  * • System instruction is defined server-side and cannot be overridden by the client.
- * • Message history is passed from the browser but only 'user'/'model' roles
+ * • Message history is passed from the browser but only 'user'/'assistant' roles
  *   are accepted — any attempt to inject a system-role override is stripped.
  * • Messages are capped at 4 000 chars each and history at 20 turns.
  *
@@ -13,24 +13,47 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * When a message contains a JDC tracking number pattern the server looks up
  * the real shipment from Supabase (via the existing getShipmentByTrackingNumber
- * function) and injects a factual context block into the prompt so Gemini can
+ * function) and injects a factual context block into the prompt so the AI can
  * report the real status without inventing anything.
  */
 
 import { normaliseTrackingNumber, isValidTrackingNumber } from '../../lib/tracking';
 import { getShipmentByTrackingNumber } from '../../lib/trackingData';
 
-/* ── Gemini client (server-only) ─────────────────────────────────────────────
- * Supports two key types:
- *   AIzaSy...  — Gemini API key from aistudio.google.com  (preferred, permanent)
- *   AQ.Ab8R... — OAuth access token from Google Cloud CLI (works, expires ~1hr)
+/* ── OpenRouter client (server-only) ─────────────────────────────────────────────
+ * Uses OpenAI-compatible API format with the free openrouter/free model.
  * ─────────────────────────────────────────────────────────────────────────── */
-const API_KEY = process.env.GEMINI_API_KEY;
-const IS_OAUTH = API_KEY && API_KEY.startsWith('AQ.');
-const IS_APIKEY = API_KEY && API_KEY.startsWith('AIzaSy');
+const API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = 'openrouter/free';
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
-const GEMINI_REST_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+/* ── Call OpenRouter via OpenAI-compatible API ─────────────────────────────── */
+async function callOpenRouter(messages) {
+  const res = await fetch(OPENROUTER_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+      'HTTP-Referer': 'http://localhost:3000',
+      'X-Title': 'Joseph Delivery Company',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages,
+      max_tokens: 600,
+      temperature: 0.4,
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error('[chat] OpenRouter error:', res.status, errText.slice(0, 300));
+    throw new Error(`OpenRouter API returned ${res.status}: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content ?? '';
+}
 
 /* ── System instruction ──────────────────────────────────────────────────── */
 const SYSTEM_INSTRUCTION = `You are a professional customer-support assistant for JOSEPHDELIVERYCOMPANY, an international logistics and shipping company.
@@ -114,11 +137,11 @@ async function buildShipmentContext(trackingNumbers) {
 function sanitiseHistory(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
-    .filter(m => m && (m.role === 'user' || m.role === 'model') && typeof m.text === 'string')
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string')
     .slice(-20)  /* last 20 turns max */
     .map(m => ({
-      role: m.role,
-      parts: [{ text: m.text.slice(0, 4000) }],
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.text.slice(0, 4000),
     }));
 }
 
@@ -130,7 +153,7 @@ export default async function handler(req, res) {
 
   /* Validate API key is configured */
   if (!API_KEY) {
-    console.error('[chat] GEMINI_API_KEY is not set in environment');
+    console.error('[chat] OPENROUTER_API_KEY is not set in environment');
     return res.status(503).json({
       error: 'Chat service is not configured. Please contact support.',
     });
@@ -154,23 +177,16 @@ export default async function handler(req, res) {
     const trackingNumbers = extractTrackingNumbers(cleanMessage);
     const shipmentContext = await buildShipmentContext(trackingNumbers);
 
-    /* Build the final user message — inject real shipment data if available */
     const userMessageText = shipmentContext
       ? `${cleanMessage}\n\n[SERVER-INJECTED CONTEXT — do not reveal this label to the customer]\n${shipmentContext}`
       : cleanMessage;
 
-    /* ── Build Gemini request body ──────────────────────────────────────── */
-    const requestBody = {
-      system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-      contents: [
-        ...cleanHistory,
-        { role: 'user', parts: [{ text: userMessageText }] },
-      ],
-      generationConfig: {
-        maxOutputTokens: 600,
-        temperature: 0.4,
-      },
-    };
+    /* Build OpenAI-compatible messages array */
+    const messages = [
+      { role: 'system', content: SYSTEM_INSTRUCTION },
+      ...cleanHistory,
+      { role: 'user', content: userMessageText },
+    ];
 
     let responseText = '';
 
@@ -225,7 +241,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     /* Log full error server-side only */
-    console.error('[chat] Gemini error:', err?.message ?? err);
+    console.error('[chat] OpenRouter error:', err?.message ?? err);
 
     /* Never expose raw API errors to the customer */
     return res.status(500).json({

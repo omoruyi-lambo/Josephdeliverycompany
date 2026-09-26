@@ -120,13 +120,23 @@ const MARKER_COLOUR = {
   IN_TRANSIT:        '#c0392b',
   OUT_FOR_DELIVERY:  '#ca8a04',
   DELIVERED:         '#16a34a',
-  ON_HOLD:           '#7c3aed',  /* purple — distinct from transit colours */
+  ON_HOLD:           '#c0392b',
   COLLECTED:         '#0369a1',
   BOOKED:            '#64748b',
   FAILED_DELIVERY:   '#dc2626',
   RETURNED:          '#9f1239',
   DEFAULT:           '#0a1f3c',
 };
+
+function isValidCoordinatePair(coords) {
+  return Boolean(
+    coords &&
+    Number.isFinite(Number(coords.lat)) &&
+    Number.isFinite(Number(coords.lng)) &&
+    Number(coords.lat) >= -90 && Number(coords.lat) <= 90 &&
+    Number(coords.lng) >= -180 && Number(coords.lng) <= 180
+  );
+}
 
 export default function ShipmentMap({ mapData, statusCode }) {
   if (!mapData) return null;
@@ -164,8 +174,11 @@ export default function ShipmentMap({ mapData, statusCode }) {
 
   /* Approximate arc length for dash-array progress indicator */
   const totalLen     = Math.hypot(destPt.x - originPt.x, destPt.y - originPt.y) * 1.1;
-  const completedLen = totalLen * Math.max(0, Math.min(1, currentPosition));
-  const remainingLen = totalLen * (1 - Math.max(0, Math.min(1, currentPosition)));
+  const progress = Number.isFinite(Number(currentPosition))
+    ? Math.max(0, Math.min(1, Number(currentPosition)))
+    : 0;
+  const completedLen = totalLen * progress;
+  const remainingLen = totalLen * (1 - progress);
 
   /* ── Decide whether to draw the Nigeria polygon ──────────────────────── */
   const drawNigeria = (

@@ -3,6 +3,17 @@ import Link from 'next/link';
 import { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { isValidTrackingNumber, normaliseTrackingNumber } from '../lib/tracking';
+
+const COLORS = {
+  navy: '#0a1f3c',
+  red: '#c0392b',
+  redHover: '#a93226',
+  gray: '#f4f5f7',
+  border: '#e2e6ea',
+  text: '#1a1a2e',
+  muted: '#64748b',
+};
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '', trackingNumber: '' });
@@ -25,6 +36,7 @@ export default function ContactPage() {
     const { name, value } = e.target;
     setForm(p => ({ ...p, [name]: value }));
     setErrors(p => ({ ...p, [name]: undefined }));
+    if (submitResult) setSubmitResult(null);
   }
 
   async function submit(e) {
@@ -55,8 +67,15 @@ export default function ContactPage() {
       </Head>
       <Header />
 
-      <section style={{ backgroundColor: '#0a1f3c', padding: '72px 24px 64px' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+      <section style={{ position: 'relative', backgroundColor: COLORS.navy, overflow: 'hidden', padding: '72px 24px 64px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1800&q=80"
+          alt="Contact and customer support operations"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.8)' }} />
+        <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
           <p style={eyebrow}>Get in Touch</p>
           <h1 style={{ fontSize: 'clamp(30px,5vw,50px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.08 }}>Contact Us</h1>
           <p style={{ fontSize: 'clamp(14px,1.8vw,17px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 480 }}>
@@ -65,15 +84,15 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <main style={{ backgroundColor: '#f4f5f7', padding: '56px 24px 80px' }}>
+      <main style={{ backgroundColor: COLORS.gray, padding: '56px 24px 80px' }}>
         <div style={{ maxWidth: 960, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 380px', gap: 32, alignItems: 'start' }} className="contact-grid">
 
           {/* Form */}
           <div style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 12, padding: 'clamp(24px,5vw,40px)' }}>
-            {sent ? (
+            {submitResult?.ok ? (
               <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: '#c0392b', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                  <i className="fa-solid fa-check" style={{ color: '#fff', fontSize: 24 }} />
+                <div style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                  <i className="fa-solid fa-check" style={{ color: '#16a34a', fontSize: 24 }} />
                 </div>
                 <h2 style={{ fontSize: 22, fontWeight: 700, color: '#0a1f3c', marginBottom: 10 }}>Message Sent!</h2>
                 <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
@@ -83,6 +102,21 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={submit} noValidate>
                 <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0a1f3c', marginBottom: 24 }}>Send a Message</h2>
+
+                {submitResult?.ok === false && (
+                  <div style={{ backgroundColor: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, padding: '16px', marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <i className="fa-solid fa-exclamation-circle" style={{ color: COLORS.red, fontSize: 20, marginTop: 2 }} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: COLORS.red, fontWeight: 600, margin: 0, marginBottom: 6 }}>{submitResult.message}</p>
+                      {submitResult.errors && submitResult.errors.length > 0 && (
+                        <ul style={{ margin: 0, paddingLeft: 18, color: '#991b1b', fontSize: 13 }}>
+                          {submitResult.errors.map((err, i) => <li key={i}>{err}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <Field label="Full Name" name="name" value={form.name} onChange={handle} error={errors.name} placeholder="John Doe" />
                   <Field label="Phone" name="phone" type="tel" value={form.phone} onChange={handle} placeholder="Your phone number" />
@@ -93,7 +127,7 @@ export default function ContactPage() {
                 <div style={{ marginBottom: 24 }}>
                   <label style={labelStyle}>Message</label>
                   <textarea name="message" value={form.message} onChange={handle} rows={5} placeholder="Tell us how we can help…"
-                    style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', borderColor: errors.message ? '#c0392b' : '#d1d5db' }} />
+                    style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', borderColor: errors.message ? COLORS.red : '#d1d5db' }} />
                   {errors.message && <p style={errStyle}>{errors.message}</p>}
                 </div>
                 {submitError && <p role="alert" style={{ ...errStyle, marginBottom: 14 }}>{submitError}</p>}
@@ -112,17 +146,17 @@ export default function ContactPage() {
               { icon: 'fa-solid fa-envelope', title: 'Email', lines: ['Use the secure contact form', 'Our team will review your message'] },
               { icon: 'fa-regular fa-clock', title: 'Office Hours', lines: ['Mon–Fri: 7am – 9pm', 'Sat: 8am – 6pm · Sun: 10am – 4pm'] },
             ].map(item => (
-              <div key={item.title} style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 10, padding: '20px 22px', display: 'flex', gap: 16 }}>
+              <div key={item.title} style={{ backgroundColor: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: '20px 22px', display: 'flex', gap: 16 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: '#fff5f4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <i className={item.icon} style={{ fontSize: 16, color: '#c0392b' }} />
+                  <i className={item.icon} style={{ fontSize: 16, color: COLORS.red }} />
                 </div>
                 <div>
                   <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>{item.title}</p>
-                  {item.lines.map(l => <p key={l} style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{l}</p>)}
+                  {item.lines.map(l => <p key={l} style={{ fontSize: 13, color: COLORS.muted, lineHeight: 1.5 }}>{l}</p>)}
                 </div>
               </div>
             ))}
-            <Link href="/support" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 20px', backgroundColor: '#0a1f3c', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none', borderRadius: 8, justifyContent: 'center' }}>
+            <Link href="/support" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 20px', backgroundColor: COLORS.navy, color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none', borderRadius: 8, justifyContent: 'center' }}>
               <i className="fa-solid fa-headset" /> View All Support Options
             </Link>
           </div>
@@ -139,20 +173,23 @@ export default function ContactPage() {
   );
 }
 
-function Field({ label, name, type = 'text', value, onChange, error, placeholder, mb = 0 }) {
+function Field({ label, name, type = 'text', value, onChange, error, placeholder, mb = 0, required = false }) {
   return (
     <div style={{ marginBottom: mb }}>
-      <label style={labelStyle}>{label}</label>
+      <label style={labelStyle}>
+        {label}
+        {required && <span style={{ color: COLORS.red, marginLeft: 3 }}>*</span>}
+      </label>
       <input id={name} name={name} type={type} value={value} onChange={onChange} placeholder={placeholder}
-        style={{ ...inputStyle, borderColor: error ? '#c0392b' : '#d1d5db' }}
-        onFocus={e => e.currentTarget.style.borderColor = '#0a1f3c'}
-        onBlur={e => e.currentTarget.style.borderColor = error ? '#c0392b' : '#d1d5db'} />
+        style={{ ...inputStyle, borderColor: error ? COLORS.red : '#d1d5db' }}
+        onFocus={e => e.currentTarget.style.borderColor = COLORS.navy}
+        onBlur={e => e.currentTarget.style.borderColor = error ? COLORS.red : '#d1d5db'} />
       {error && <p style={errStyle}>{error}</p>}
     </div>
   );
 }
 
-const eyebrow = { fontSize: 11, fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: '#c0392b', marginBottom: 12 };
+const eyebrow = { fontSize: 11, fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: COLORS.red, marginBottom: 12 };
 const labelStyle = { display: 'block', fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.8px' };
-const inputStyle = { display: 'block', width: '100%', padding: '11px 14px', fontSize: 14, color: '#1a1a2e', backgroundColor: '#fff', border: '1px solid #d1d5db', borderRadius: 6, outline: 'none', boxSizing: 'border-box' };
-const errStyle = { fontSize: 12, color: '#c0392b', marginTop: 4 };
+const inputStyle = { display: 'block', width: '100%', padding: '11px 14px', fontSize: 14, color: COLORS.text, backgroundColor: '#fff', border: '1px solid #d1d5db', borderRadius: 6, outline: 'none', boxSizing: 'border-box' };
+const errStyle = { fontSize: 12, color: COLORS.red, marginTop: 4 };

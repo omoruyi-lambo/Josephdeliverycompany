@@ -4,9 +4,9 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 
 const SERVICES = [
-  { icon: 'fa-solid fa-bolt', title: 'Express Delivery', time: 'Next Day', price: 'From ₦4,500', desc: 'Next-business-day door-to-door delivery for time-critical parcels up to 30 kg anywhere in Nigeria.', href: '/services/express', img: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=800&q=80' },
-  { icon: 'fa-solid fa-truck', title: 'Domestic Shipping', time: '3–5 Days', price: 'From ₦1,800', desc: 'Reliable, affordable delivery across all 36 states and the FCT. Perfect for e-commerce and personal shipments.', href: '/services/domestic', img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80' },
-  { icon: 'fa-solid fa-earth-africa', title: 'International Shipping', time: '5–14 Days', price: 'From ₦18,000', desc: 'Cross-border delivery to 180+ countries. Full customs documentation and clearance support included.', href: '/services/international', img: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80' },
+  { icon: 'fa-solid fa-bolt', title: 'Express Delivery', time: 'Next Day', price: 'From $35', desc: 'Next-business-day door-to-door delivery for time-critical parcels up to 30 kg within our service network.', href: '/services/express', img: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=800&q=80' },
+  { icon: 'fa-solid fa-truck', title: 'Domestic Shipping', time: '3–5 Days', price: 'From $15', desc: 'Reliable, affordable delivery across our coverage network. Perfect for e-commerce and personal shipments.', href: '/services/domestic', img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80' },
+  { icon: 'fa-solid fa-earth-africa', title: 'International Shipping', time: '5–14 Days', price: 'From $149', desc: 'Cross-border delivery to 180+ countries. Full customs documentation and clearance support included.', href: '/services/international', img: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80' },
   { icon: 'fa-solid fa-pallet', title: 'Freight & Cargo', time: 'Custom', price: 'Custom Quote', desc: 'Road and air freight for heavy, oversized, or high-volume commercial cargo. Pallet and container solutions.', href: '/services/freight', img: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80' },
   { icon: 'fa-solid fa-building', title: 'Business Shipping', time: 'Flexible', price: 'Volume Rates', desc: 'Dedicated account management, bulk pricing, and API integration for businesses shipping at scale.', href: '/business', img: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=800&q=80' },
   { icon: 'fa-solid fa-warehouse', title: 'Warehousing', time: 'Ongoing', price: 'Contact Us', desc: 'Short and long-term storage with inventory management. Fulfillment services available for e-commerce sellers.', href: '/contact', img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80' },
@@ -23,8 +23,15 @@ export default function ServicesPage() {
       </Head>
       <Header />
 
-      <section style={{ backgroundColor: '#0a1f3c', padding: '72px 24px 64px' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '72px 24px 64px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1800&q=80"
+          alt="Logistics services - cargo containers, trucks, and warehouse"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.78)' }} />
+        <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
           <p style={eyebrow}>What We Offer</p>
           <h1 style={{ fontSize: 'clamp(30px,5vw,50px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.08 }}>
             End-to-End Logistics Services
