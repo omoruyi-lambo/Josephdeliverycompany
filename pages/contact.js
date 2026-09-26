@@ -5,9 +5,11 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 export default function ContactPage() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '', trackingNumber: '' });
   const [errors, setErrors] = useState({});
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   function validate() {
     const e = {};
@@ -15,6 +17,7 @@ export default function ContactPage() {
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) e.email = 'Valid email required.';
     if (!form.subject.trim()) e.subject = 'Please enter a subject.';
     if (!form.message.trim() || form.message.length < 10) e.message = 'Message must be at least 10 characters.';
+    if (form.trackingNumber.trim() && !/^[A-Z0-9][A-Z0-9-]{4,31}$/i.test(form.trackingNumber.trim())) e.trackingNumber = 'Enter a valid tracking number.';
     return e;
   }
 
@@ -24,18 +27,29 @@ export default function ContactPage() {
     setErrors(p => ({ ...p, [name]: undefined }));
   }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
-    setSent(true);
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const response = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: form.name, email: form.email, phone: form.phone, subject: form.subject, message: form.message, trackingNumber: form.trackingNumber }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to send your message right now. Please try again.');
+      setSent(true);
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <>
       <Head>
         <title>Contact Us — Josephdeliverycompany</title>
-        <meta name="description" content="Contact Josephdeliverycompany by phone, email, or our online form. We respond within 2 business hours." />
+        <meta name="description" content="Contact Josephdeliverycompany by phone, email, or our secure online support form." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -46,7 +60,7 @@ export default function ContactPage() {
           <p style={eyebrow}>Get in Touch</p>
           <h1 style={{ fontSize: 'clamp(30px,5vw,50px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.08 }}>Contact Us</h1>
           <p style={{ fontSize: 'clamp(14px,1.8vw,17px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 480 }}>
-            Questions about a shipment, pricing, or partnership? Send us a message and we'll get back to you within 2 hours.
+            Questions about a shipment, pricing, or partnership? Send us a message and our support team will review it.
           </p>
         </div>
       </section>
@@ -63,7 +77,7 @@ export default function ContactPage() {
                 </div>
                 <h2 style={{ fontSize: 22, fontWeight: 700, color: '#0a1f3c', marginBottom: 10 }}>Message Sent!</h2>
                 <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
-                  Thanks for reaching out. We'll reply to <strong>{form.email}</strong> within 2 business hours.
+                  Your message has been sent successfully. Our support team will review it and respond when appropriate.
                 </p>
               </div>
             ) : (
@@ -71,20 +85,22 @@ export default function ContactPage() {
                 <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0a1f3c', marginBottom: 24 }}>Send a Message</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <Field label="Full Name" name="name" value={form.name} onChange={handle} error={errors.name} placeholder="John Doe" />
-                  <Field label="Phone" name="phone" type="tel" value={form.phone} onChange={handle} placeholder="+1 (305) 555-0100" />
+                  <Field label="Phone" name="phone" type="tel" value={form.phone} onChange={handle} placeholder="Your phone number" />
                 </div>
                 <Field label="Email" name="email" type="email" value={form.email} onChange={handle} error={errors.email} placeholder="john@example.com" mb={16} />
-                <Field label="Subject" name="subject" value={form.subject} onChange={handle} error={errors.subject} placeholder="Re: Tracking number JDC-2026-00127" mb={16} />
+                <Field label="Subject" name="subject" value={form.subject} onChange={handle} error={errors.subject} placeholder="How can we help?" mb={16} />
+                <Field label="Tracking Number (optional)" name="trackingNumber" value={form.trackingNumber} onChange={handle} error={errors.trackingNumber} placeholder="JDC-2026-00001" mb={16} />
                 <div style={{ marginBottom: 24 }}>
                   <label style={labelStyle}>Message</label>
                   <textarea name="message" value={form.message} onChange={handle} rows={5} placeholder="Tell us how we can help…"
                     style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', borderColor: errors.message ? '#c0392b' : '#d1d5db' }} />
                   {errors.message && <p style={errStyle}>{errors.message}</p>}
                 </div>
-                <button type="submit" style={{ width: '100%', padding: '14px', backgroundColor: '#c0392b', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 6, cursor: 'pointer', letterSpacing: '0.4px' }}
+                {submitError && <p role="alert" style={{ ...errStyle, marginBottom: 14 }}>{submitError}</p>}
+                <button type="submit" disabled={submitting} style={{ width: '100%', padding: '14px', backgroundColor: submitting ? '#9aa6b4' : '#c0392b', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 6, cursor: submitting ? 'not-allowed' : 'pointer', letterSpacing: '0.4px' }}
                   onMouseOver={e => e.currentTarget.style.backgroundColor = '#a93226'}
                   onMouseOut={e => e.currentTarget.style.backgroundColor = '#c0392b'}>
-                  SEND MESSAGE
+                  {submitting ? 'SENDING…' : 'SEND MESSAGE'}
                 </button>
               </form>
             )}
@@ -93,9 +109,7 @@ export default function ContactPage() {
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {[
-              { icon: 'fa-solid fa-phone', title: 'Phone', lines: ['+1 (305) 555-0192', '24/7 for urgent issues'] },
-              { icon: 'fa-solid fa-envelope', title: 'Email', lines: ['info@josephdeliverycompany.com', 'support@josephdeliverycompany.com'] },
-              { icon: 'fa-solid fa-location-dot', title: 'Head Office', lines: ['14 Marina Street', 'Lagos Island, Lagos, Nigeria'] },
+              { icon: 'fa-solid fa-envelope', title: 'Email', lines: ['Use the secure contact form', 'Our team will review your message'] },
               { icon: 'fa-regular fa-clock', title: 'Office Hours', lines: ['Mon–Fri: 7am – 9pm', 'Sat: 8am – 6pm · Sun: 10am – 4pm'] },
             ].map(item => (
               <div key={item.title} style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 10, padding: '20px 22px', display: 'flex', gap: 16 }}>

@@ -1,15 +1,9 @@
 import Link from 'next/link';
 
-/* ─── DEMO CONTACT PLACEHOLDERS ────────────────────────────────────────────
+/* ─── CONTACT DETAILS ──────────────────────────────────────────────────────
    Replace these values with the client's real contact details.
    All contact info is centralised here for easy future updates.
    ─────────────────────────────────────────────────────────────────────── */
-const CONTACT = {
-  phone: '+1 (305) 555-0192',
-  email: 'info@josephdeliverycompany.com',
-  address: '1221 Brickell Ave, Miami, FL 33131, USA',
-};
-
 const FOOTER_LINKS = [
   {
     heading: 'Company',
@@ -102,23 +96,7 @@ export default function Footer() {
             {/* Contact details */}
             <address style={{ fontStyle: 'normal', display: 'flex', flexDirection: 'column', gap: '11px' }}>
               <a
-                href={`tel:${CONTACT.phone.replace(/\s/g, '')}`}
-                className="footer-contact-link"
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '10px',
-                  color: '#94a3b8',
-                  textDecoration: 'none',
-                  fontSize: '13px',
-                  lineHeight: 1.4,
-                }}
-              >
-                <i className="fa-solid fa-phone" style={{ fontSize: '12px', marginTop: '1px', color: '#c0392b', flexShrink: 0 }} />
-                {CONTACT.phone}
-              </a>
-              <a
-                href={`mailto:${CONTACT.email}`}
+                href="/contact"
                 className="footer-contact-link"
                 style={{
                   display: 'flex',
@@ -132,19 +110,8 @@ export default function Footer() {
                 }}
               >
                 <i className="fa-solid fa-envelope" style={{ fontSize: '12px', marginTop: '1px', color: '#c0392b', flexShrink: 0 }} />
-                {CONTACT.email}
+                Contact support
               </a>
-              <p style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
-                color: '#94a3b8',
-                fontSize: '13px',
-                lineHeight: 1.5,
-              }}>
-                <i className="fa-solid fa-location-dot" style={{ fontSize: '12px', marginTop: '2px', color: '#c0392b', flexShrink: 0 }} />
-                {CONTACT.address}
-              </p>
             </address>
 
             {/* Social icons */}

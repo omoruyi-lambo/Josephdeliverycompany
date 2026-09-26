@@ -86,7 +86,7 @@ export default function TrackPage({
           {hasInput && !formatValid && (
             <ErrorState
               title="Invalid tracking number"
-              message={`"${rawTracking}" is not a recognised format. Josephdeliverycompany tracking numbers look like JDC-2026-00127.`}
+              message={`"${rawTracking}" is not a recognised format. Use a tracking number in the format JDC-YYYY-NNNNN.`}
             />
           )}
 
@@ -177,21 +177,9 @@ function EmptyState() {
         Use the search bar to track your Josephdeliverycompany shipment.
       </p>
       <p style={{ fontSize: '13px', color: '#94a3b8' }}>
-        Try:{' '}
-        <Link href="/track?tracking=JDC-2026-00127"
-          style={{ color: '#0a1f3c', fontWeight: 600, fontFamily: 'monospace' }}>
-          JDC-2026-00127
-        </Link>
+        Enter your tracking number above.
         {' · '}
-        <Link href="/track?tracking=JDC-2026-00128"
-          style={{ color: '#0a1f3c', fontWeight: 600, fontFamily: 'monospace' }}>
-          JDC-2026-00128
-        </Link>
         {' · '}
-        <Link href="/track?tracking=JDC-2026-00129"
-          style={{ color: '#0a1f3c', fontWeight: 600, fontFamily: 'monospace' }}>
-          JDC-2026-00129
-        </Link>
       </p>
     </div>
   );

@@ -154,14 +154,6 @@ export default function TrackingSearch({ initialValue = '' }) {
             </p>
           )}
 
-          {!error && (
-            <p style={{ marginTop: '10px', fontSize: '12px', color: '#64748b' }}>
-              Example:{' '}
-              <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>
-                JDC-2026-00127
-              </span>
-            </p>
-          )}
         </form>
       </div>
 

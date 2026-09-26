@@ -22,7 +22,7 @@ const SECTIONS = [
   },
   {
     title: '5. Your Rights',
-    body: `You have the right to access a copy of your personal data, correct inaccurate data, request deletion of your data, object to processing of your data, and withdraw consent where processing is based on consent.\n\nTo exercise these rights, contact us at privacy@josephdeliverycompany.com.`,
+    body: `You have the right to access a copy of your personal data, correct inaccurate data, request deletion of your data, object to processing of your data, and withdraw consent where processing is based on consent.\n\nTo exercise these rights, use the secure contact form.`,
   },
   {
     title: '6. Security',
@@ -38,7 +38,7 @@ const SECTIONS = [
   },
   {
     title: '9. Contact',
-    body: `For privacy-related questions or requests, contact our Data Protection Officer at:\n\nprivacy@josephdeliverycompany.com\n1221 Brickell Ave, Miami, FL 33131, USA\n+1 (305) 555-0192`,
+    body: 'For privacy-related questions or requests, use the secure contact form.',
   },
 ];
 

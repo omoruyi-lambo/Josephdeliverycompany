@@ -50,14 +50,13 @@ YOUR ROLE:
 - If you do not know something specific, say so honestly and direct the customer to contact support.
 
 TRACKING:
-- JOSEPHDELIVERYCOMPANY tracking numbers use the format: JDC-YYYY-NNNNN (e.g. JDC-2026-00127)
+- JOSEPHDELIVERYCOMPANY tracking numbers use the format: JDC-YYYY-NNNNN
 - When a customer asks about their shipment, ask for the tracking number if they have not provided one.
 - When shipment data is provided in the prompt (below), use ONLY that data — do not invent or supplement it.
 - If no shipment data is provided for a tracking number, tell the customer the shipment could not be found and ask them to verify the number or contact support.
 
 CONTACT:
-- Phone: +1 (305) 555-0192
-- Email: support@josephdeliverycompany.com
+- Direct customers to the secure contact form for support.
 - Website: /contact
 
 Keep responses focused and helpful. Do not ramble.`;
@@ -177,7 +176,7 @@ export default async function handler(req, res) {
 
     if (IS_APIKEY) {
       /* ── Path 1: API key (AIzaSy...) via @google/genai SDK ────────────── */
-      const { GoogleGenAI } = await import('@google/genai');
+      const { GoogleGenAI } = await import('../../lib/googleGenAI');
       const ai = new GoogleGenAI({ apiKey: API_KEY });
       const response = await ai.models.generateContent({
         model: GEMINI_MODEL,
@@ -230,7 +229,7 @@ export default async function handler(req, res) {
 
     /* Never expose raw API errors to the customer */
     return res.status(500).json({
-      error: "I'm unable to respond right now. Please try again shortly or contact our support team at support@josephdeliverycompany.com.",
+      error: "I'm unable to respond right now. Please try again shortly or contact our support team through the secure contact form.",
     });
   }
 }

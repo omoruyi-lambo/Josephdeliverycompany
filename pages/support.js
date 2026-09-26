@@ -4,10 +4,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 const CHANNELS = [
-  { icon: 'fa-solid fa-phone', title: 'Phone Support', detail: '+1 (305) 555-0192', sub: 'Available 24/7 for urgent issues', href: 'tel:+13055550192', cta: 'Call Now' },
-  { icon: 'fa-solid fa-envelope', title: 'Email Support', detail: 'support@josephdeliverycompany.com', sub: 'Response within 2 business hours', href: 'mailto:support@josephdeliverycompany.com', cta: 'Send Email' },
-  { icon: 'fa-brands fa-whatsapp', title: 'WhatsApp', detail: '+1 (305) 555-0192', sub: 'Chat with a logistics agent instantly', href: 'https://wa.me/13055550192', cta: 'Open Chat' },
-  { icon: 'fa-solid fa-comment-dots', title: 'Live Chat', detail: 'On-site chat widget', sub: 'Click the icon at the bottom right', href: '#', cta: 'Start Chat' },
+  { icon: 'fa-solid fa-envelope', title: 'Contact Support', detail: 'Secure contact form', sub: 'Send a message to the support team', href: '/contact', cta: 'Open Form' },
+  { icon: 'fa-solid fa-magnifying-glass', title: 'Track a Shipment', detail: 'Live shipment lookup', sub: 'Use your tracking number to view updates', href: '/track', cta: 'Track Shipment' },
 ];
 
 const TOPICS = [
@@ -24,7 +22,7 @@ export default function SupportPage() {
     <>
       <Head>
         <title>Support — Josephdeliverycompany</title>
-        <meta name="description" content="Get help with your Josephdeliverycompany shipment. 24/7 phone, email, WhatsApp, and live chat support available." />
+        <meta name="description" content="Get help with your Josephdeliverycompany shipment through the secure support form and self-service resources." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -38,7 +36,7 @@ export default function SupportPage() {
             We're Here to Help
           </h1>
           <p style={{ fontSize: 'clamp(14px,1.8vw,17px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 500, margin: '0 auto' }}>
-            Our logistics support team is available around the clock — by phone, email, WhatsApp, or live chat.
+            Find shipment help, browse common topics, or send a secure message to our support team.
           </p>
         </div>
       </section>
@@ -85,18 +83,10 @@ export default function SupportPage() {
           </div>
         </section>
 
-        {/* Response time guarantee */}
+        {/* Support contact CTA */}
         <section style={{ backgroundColor: '#0a1f3c', padding: '64px 24px', borderTop: '4px solid #c0392b' }}>
           <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 28, textAlign: 'center' }}>
-              {[['fa-solid fa-phone', '24/7', 'Phone Support'], ['fa-solid fa-envelope', '< 2 hrs', 'Email Response'], ['fa-solid fa-comment-dots', 'Instant', 'Live Chat'], ['fa-solid fa-star', '98%', 'Satisfaction Rate']].map(([icon, val, label]) => (
-                <div key={label}>
-                  <i className={icon} style={{ fontSize: 22, color: '#c0392b', marginBottom: 12, display: 'block' }} />
-                  <p style={{ fontSize: 'clamp(26px,4vw,38px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.04em', marginBottom: 4 }}>{val}</p>
-                  <p style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>{label}</p>
-                </div>
-              ))}
-            </div>
+            <div style={{ maxWidth: 650, margin: '0 auto', textAlign: 'center' }}><i className="fa-solid fa-envelope-open-text" style={{ fontSize: 25, color: '#c0392b', marginBottom: 14 }} /><h2 style={{ color: '#fff', fontSize: 24, marginBottom: 10 }}>Still need help?</h2><p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.6, marginBottom: 22 }}>Send the support team the details of your question and we will review your message.</p><Link href="/contact" style={{ display: 'inline-flex', padding: '11px 20px', backgroundColor: '#c0392b', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none', borderRadius: 6 }}>Contact support <i className="fa-solid fa-arrow-right" style={{ marginLeft: 8 }} /></Link></div>
           </div>
         </section>
       </main>

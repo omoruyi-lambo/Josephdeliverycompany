@@ -147,13 +147,6 @@ export default function TrackingForm() {
               </p>
             )}
 
-            {/* Example hint */}
-            <p style={{ marginTop: '12px', fontSize: '12px', color: '#94a3b8' }}>
-              Example:{' '}
-              <span style={{ fontFamily: 'monospace', color: '#64748b' }}>
-                JDC-2026-00127
-              </span>
-            </p>
           </form>
         </div>
       </div>

@@ -133,8 +133,12 @@ export default function ShipmentMap({ mapData, statusCode }) {
 
   const {
     originCity, destinationCity, currentCity,
-    originCoords, destinationCoords, currentPosition,
+    originCoords, destinationCoords, currentCoords, currentPosition,
   } = mapData;
+
+  const hasValidOrigin = originCoords && Number.isFinite(originCoords.lat) && Number.isFinite(originCoords.lng);
+  const hasValidDestination = destinationCoords && Number.isFinite(destinationCoords.lat) && Number.isFinite(destinationCoords.lng);
+  if (!hasValidOrigin || !hasValidDestination) return <div style={{ marginBottom: '24px', padding: '28px 20px', border: '1px solid #e2e6ea', borderRadius: '3px', backgroundColor: '#fff', color: '#64748b', textAlign: 'center', fontSize: '14px' }}><i className="fa-solid fa-map-location-dot" style={{ display: 'block', marginBottom: '10px', color: '#94a3b8', fontSize: '22px' }} />Location coordinates are currently unavailable.</div>;
 
   /* ── Build dynamic bounding box from this shipment's actual coordinates ── */
   const bbox = buildBBox(originCoords, destinationCoords);
@@ -143,8 +147,8 @@ export default function ShipmentMap({ mapData, statusCode }) {
   const originPt  = toSVG(originCoords.lat,     originCoords.lng,     bbox);
   const destPt    = toSVG(destinationCoords.lat, destinationCoords.lng, bbox);
 
-  const currentCoords = interpolate(originCoords, destinationCoords, currentPosition);
-  const currentPt     = toSVG(currentCoords.lat, currentCoords.lng, bbox);
+  const storedCurrent = currentCoords && Number.isFinite(currentCoords.lat) && Number.isFinite(currentCoords.lng) ? currentCoords : null;
+  const currentPt     = storedCurrent ? toSVG(storedCurrent.lat, storedCurrent.lng, bbox) : null;
 
   const markerColour = MARKER_COLOUR[statusCode] || MARKER_COLOUR.DEFAULT;
 
@@ -390,7 +394,7 @@ export default function ShipmentMap({ mapData, statusCode }) {
           </g>
 
           {/* ── Current position marker ───────────────────────────── */}
-          <g>
+          {currentPt && <g>
             <circle cx={currentPt.x} cy={currentPt.y} r={20} fill={markerColour} opacity="0.10" />
             <circle cx={currentPt.x} cy={currentPt.y} r={13} fill={markerColour} opacity="0.18" />
             <circle cx={currentPt.x} cy={currentPt.y} r={13}
@@ -407,10 +411,10 @@ export default function ShipmentMap({ mapData, statusCode }) {
             >
               {'\uf3c5'}
             </text>
-          </g>
+          </g>}
 
           {/* Progress % badge */}
-          <g>
+          {currentPt && <g>
             <rect
               x={currentPt.x - 24} y={currentPt.y + 18}
               width={48} height={16}
@@ -427,7 +431,7 @@ export default function ShipmentMap({ mapData, statusCode }) {
             >
               {Math.round(currentPosition * 100)}% done
             </text>
-          </g>
+          </g>}
         </svg>
       </div>
 

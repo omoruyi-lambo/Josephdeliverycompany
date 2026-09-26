@@ -32,6 +32,8 @@ export default function QuotePage() {
   });
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   function update(field, value) {
     setForm((p) => ({ ...p, [field]: value }));
@@ -65,11 +67,22 @@ export default function QuotePage() {
 
   function back() { setStep((s) => s - 1); }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const errs = validateStep(3);
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    setSubmitted(true);
+    setSaving(true);
+    setSubmitError('');
+    try {
+      const response = await fetch('/api/quote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to submit your quote request right now. Please try again.');
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   const STEPS = ['Service', 'Shipment Details', 'Your Info'];
@@ -127,7 +140,7 @@ export default function QuotePage() {
                 <strong>{form.originCity}</strong> to <strong>{form.destCity}</strong>.
               </p>
               <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '36px' }}>
-                A quote will be sent to <strong style={{ color: '#374151' }}>{form.email}</strong> within 2 business hours.
+                Our team will review the request and follow up using the contact details provided.
               </p>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Link href="/track" style={btnRed}>TRACK A SHIPMENT</Link>
@@ -169,6 +182,7 @@ export default function QuotePage() {
               {/* ── Form card ────────────────────────────────── */}
               <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e6ea', overflow: 'hidden' }}>
                 <form onSubmit={handleSubmit} noValidate>
+                  {submitError && <p role="alert" style={{ marginBottom: 18, padding: '11px 14px', borderRadius: 6, color: '#a93226', backgroundColor: '#fff1ef', fontSize: 13 }}>{submitError}</p>}
 
                   {/* STEP 1 — Service type */}
                   {step === 1 && (
@@ -333,8 +347,8 @@ export default function QuotePage() {
                           Continue <i className="fa-solid fa-arrow-right" style={{ fontSize: '12px' }} />
                         </button>
                       ) : (
-                        <button type="submit" style={btnPrimary}>
-                          Submit Quote Request <i className="fa-solid fa-paper-plane" style={{ fontSize: '12px' }} />
+                        <button type="submit" disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.65 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}>
+                          {saving ? 'Submitting…' : 'Submit Quote Request'} <i className="fa-solid fa-paper-plane" style={{ fontSize: '12px' }} />
                         </button>
                       )}
                     </div>

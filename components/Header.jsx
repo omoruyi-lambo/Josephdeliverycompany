@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { supabase } from '../lib/supabase/client';
 
 const NAV_LINKS = [
   { label: 'Shipping', href: '/shipping', hasDropdown: false },
@@ -8,10 +9,70 @@ const NAV_LINKS = [
   { label: 'Locations', href: '/locations', hasDropdown: false },
   { label: 'About', href: '/about', hasDropdown: false },
   { label: 'Support', href: '/support', hasDropdown: false },
+  { label: 'Account', href: '/account', hasDropdown: false },
 ];
+
+const authButtonStyle = {
+  padding: '8px 16px',
+  fontSize: '14px',
+  fontWeight: 500,
+  color: '#0a1f3c',
+  textDecoration: 'none',
+  border: '1px solid #d1d5db',
+  borderRadius: '6px',
+  whiteSpace: 'nowrap',
+  transition: 'background-color 0.15s',
+};
+
+const mobileAuthButtonStyle = {
+  display: 'block',
+  padding: '13px 16px',
+  fontSize: '15px',
+  fontWeight: 500,
+  color: '#0a1f3c',
+  textDecoration: 'none',
+  border: '1px solid #d1d5db',
+  borderRadius: '6px',
+  textAlign: 'center',
+};
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [auth, setAuth] = useState({ user: null, profile: null });
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!active) return;
+      if (!user) {
+        setAuth({ user: null, profile: null });
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, account_type')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (active) setAuth({ user, profile: profile || null });
+    }
+
+    loadAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      setTimeout(loadAuth, 0);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const profileName = [auth.profile?.first_name, auth.profile?.last_name].filter(Boolean).join(' ') || 'Profile';
+  const profileInitial = profileName.charAt(0).toUpperCase();
 
   return (
     <header style={{
@@ -41,13 +102,13 @@ export default function Header() {
           gap: '28px',
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <i className="fa-solid fa-phone" style={{ fontSize: '10px', color: '#c0392b' }} />
-            +1 (305) 555-0192
+            <i className="fa-solid fa-shield-halved" style={{ fontSize: '10px', color: '#c0392b' }} />
+            Secure support via contact form
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Link href="/contact" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <i className="fa-solid fa-envelope" style={{ fontSize: '10px', color: '#c0392b' }} />
-            info@josephdeliverycompany.com
-          </span>
+            Contact support
+          </Link>
         </div>
       </div>
 
@@ -118,40 +179,17 @@ export default function Header() {
               className="desktop-nav"
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              <Link
-                href="/signin"
-                className="signin-btn"
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#0a1f3c',
-                  textDecoration: 'none',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  whiteSpace: 'nowrap',
-                  transition: 'background-color 0.15s',
-                }}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                className="signup-btn"
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#0a1f3c',
-                  textDecoration: 'none',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  whiteSpace: 'nowrap',
-                  transition: 'background-color 0.15s',
-                }}
-              >
-                Sign Up
-              </Link>
+              {auth.user ? (
+                <Link href="/account" className="profile-nav-btn">
+                  <span className="profile-nav-avatar">{profileInitial}</span>
+                  {profileName}
+                </Link>
+              ) : (
+                <>
+                  <Link href="/signin" className="signin-btn" style={authButtonStyle}>Sign In</Link>
+                  <Link href="/signup" className="signup-btn" style={authButtonStyle}>Sign Up</Link>
+                </>
+              )}
               <Link
                 href="/quote"
                 className="quote-btn"
@@ -223,40 +261,14 @@ export default function Header() {
             ))}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '18px' }}>
-              <Link
-                href="/signin"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: 'block',
-                  padding: '13px 16px',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  color: '#0a1f3c',
-                  textDecoration: 'none',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  textAlign: 'center',
-                }}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: 'block',
-                  padding: '13px 16px',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  color: '#0a1f3c',
-                  textDecoration: 'none',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  textAlign: 'center',
-                }}
-              >
-                Sign Up
-              </Link>
+              {auth.user ? (
+                <Link href="/account" onClick={() => setMobileOpen(false)} className="mobile-profile-link"><span className="profile-nav-avatar">{profileInitial}</span> View {profileName}</Link>
+              ) : (
+                <>
+                  <Link href="/signin" onClick={() => setMobileOpen(false)} style={mobileAuthButtonStyle}>Sign In</Link>
+                  <Link href="/signup" onClick={() => setMobileOpen(false)} style={mobileAuthButtonStyle}>Sign Up</Link>
+                </>
+              )}
               <Link
                 href="/quote"
                 onClick={() => setMobileOpen(false)}
@@ -299,6 +311,40 @@ export default function Header() {
         }
         .signup-btn:hover {
           background-color: #f4f5f7 !important;
+        }
+        .profile-nav-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 7px 12px 7px 7px;
+          border: 1px solid #dbe2ea;
+          border-radius: 99px;
+          color: #0a1f3c;
+          font-size: 13px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+        .profile-nav-btn:hover { background-color: #f4f5f7; }
+        .profile-nav-avatar {
+          display: inline-grid;
+          place-items: center;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: #0a1f3c;
+          color: #fff;
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .mobile-profile-link {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 13px 0;
+          border-bottom: 1px solid #f3f4f6;
+          color: #0a1f3c;
+          font-size: 15px;
+          font-weight: 700;
         }
         .quote-btn:hover {
           background-color: #a93226 !important;

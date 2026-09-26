@@ -26,7 +26,7 @@ const SECTIONS = [
   },
   {
     title: '6. Claims',
-    body: `Claims for loss must be submitted within 30 days of the scheduled delivery date. Claims for damage must be submitted within 48 hours of delivery. Claims must be submitted in writing to support@josephdeliverycompany.com with supporting documentation.`,
+    body: `Claims for loss must be submitted within 30 days of the scheduled delivery date. Claims for damage must be submitted within 48 hours of delivery. Claims must be submitted through the secure contact form with supporting documentation.`,
   },
   {
     title: '7. Tracking and Data',

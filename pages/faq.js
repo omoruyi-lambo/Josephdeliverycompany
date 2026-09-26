@@ -11,7 +11,7 @@ const SECTIONS = [
       { q: 'How do I track my shipment?', a: 'Go to josephdeliverycompany.com/track and enter your tracking number (format: JDC-YYYY-XXXXX). You\'ll see the full journey with timestamps at every checkpoint.' },
       { q: 'Why hasn\'t my tracking updated?', a: 'Tracking updates at key scan points — pickup, hub arrival, out for delivery, and delivered. If 24 hours have passed without an update on a domestic shipment, contact our support team.' },
       { q: 'What do the tracking statuses mean?', a: 'Booked: order confirmed. Collected: parcel picked up. In Transit: moving through our network. Out for Delivery: courier is on the way. Delivered: parcel received. Failed Delivery: recipient unavailable — re-delivery or depot hold will follow.' },
-      { q: 'Can I track via SMS?', a: 'Yes. Text your tracking number to +1 (305) 555-0192 and we\'ll reply with the current status within minutes.' },
+      { q: 'Can I track via SMS?', a: 'Use the online tracking page with your tracking number. For additional help, contact the support team.' },
     ],
   },
   {
@@ -37,7 +37,7 @@ const SECTIONS = [
     faqs: [
       { q: 'What payment methods do you accept?', a: 'We accept bank transfer, Paystack, Flutterwave, USSD, and card payments (Visa, Mastercard). Business accounts can request invoice-based net-30 terms.' },
       { q: 'How do invoices work?', a: 'Individual shipments are invoiced immediately on booking. Business accounts receive a consolidated invoice weekly or monthly, depending on their plan.' },
-      { q: 'How do I dispute a charge?', a: 'Email billing@josephdeliverycompany.com with your invoice number and a description of the discrepancy. We investigate within 2 business days.' },
+      { q: 'How do I dispute a charge?', a: 'Use the secure contact form with your invoice number and a description of the discrepancy. We investigate within 2 business days.' },
     ],
   },
   {
@@ -72,7 +72,7 @@ export default function FAQPage() {
           Frequently Asked Questions
         </h1>
         <p style={{ fontSize: 'clamp(14px,1.8vw,16px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 480, margin: '0 auto' }}>
-          Can't find what you need? <Link href="/contact" style={{ color: '#fff', fontWeight: 600, textDecoration: 'none' }}>Contact our team</Link> — we respond within 2 hours.
+          Can't find what you need? <Link href="/contact" style={{ color: '#fff', fontWeight: 600, textDecoration: 'none' }}>Contact our team</Link> through the secure form.
         </p>
       </section>
 

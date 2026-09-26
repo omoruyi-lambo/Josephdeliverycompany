@@ -71,6 +71,8 @@ CREATE TABLE IF NOT EXISTS public.shipments (
   tracking_number    TEXT         NOT NULL,
   customer_id        UUID         REFERENCES public.profiles (id) ON DELETE SET NULL,
   customer_name      TEXT,
+  customer_email     TEXT,
+  customer_phone     TEXT,
   status             TEXT         NOT NULL DEFAULT 'Booked',
   status_code        TEXT         NOT NULL DEFAULT 'BOOKED'
                      CHECK (status_code IN (
@@ -79,14 +81,22 @@ CREATE TABLE IF NOT EXISTS public.shipments (
                      )),
   current_location   TEXT         NOT NULL DEFAULT '',
   current_city       TEXT         NOT NULL DEFAULT '',
+  current_country    TEXT,
+  current_address    TEXT,
   origin             TEXT         NOT NULL DEFAULT '',
   destination        TEXT         NOT NULL DEFAULT '',
   origin_city        TEXT         NOT NULL DEFAULT '',
   destination_city   TEXT         NOT NULL DEFAULT '',
+  origin_country     TEXT,
+  origin_address     TEXT,
+  destination_country TEXT,
+  destination_address TEXT,
   origin_lat         NUMERIC(9,6),
   origin_lng         NUMERIC(9,6),
   destination_lat    NUMERIC(9,6),
   destination_lng    NUMERIC(9,6),
+  current_lat        NUMERIC(9,6),
+  current_lng        NUMERIC(9,6),
   current_position   NUMERIC(4,3) NOT NULL DEFAULT 0.0
                      CHECK (current_position >= 0 AND current_position <= 1),
   shipment_type      TEXT         NOT NULL DEFAULT '',
@@ -103,6 +113,41 @@ CREATE TRIGGER shipments_updated_at
   BEFORE UPDATE ON public.shipments
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS customer_email TEXT;
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS customer_phone TEXT;
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS current_lat NUMERIC(9,6);
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS current_lng NUMERIC(9,6);
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS current_country TEXT;
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS current_address TEXT;
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS origin_country TEXT;
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS origin_address TEXT;
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS destination_country TEXT;
+ALTER TABLE public.shipments ADD COLUMN IF NOT EXISTS destination_address TEXT;
+ALTER TABLE public.shipments DROP CONSTRAINT IF EXISTS shipments_status_code_check;
+ALTER TABLE public.shipments ADD CONSTRAINT shipments_status_code_check CHECK (status_code IN (
+  'BOOKED','PICKED_UP','COLLECTED','IN_TRANSIT','ARRIVED','OUT_FOR_DELIVERY',
+  'DELIVERED','FAILED_DELIVERY','RETURNED','ON_HOLD'
+));
+
+CREATE SEQUENCE IF NOT EXISTS public.shipment_tracking_number_seq START WITH 1;
+
+CREATE OR REPLACE FUNCTION public.generate_tracking_number()
+RETURNS TEXT LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  candidate TEXT;
+BEGIN
+  LOOP
+    candidate := 'JDC-' || EXTRACT(YEAR FROM CURRENT_DATE)::TEXT || '-' ||
+      LPAD(nextval('public.shipment_tracking_number_seq')::TEXT, 5, '0');
+    EXIT WHEN NOT EXISTS (SELECT 1 FROM public.shipments WHERE tracking_number = candidate);
+  END LOOP;
+  RETURN candidate;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.generate_tracking_number() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.generate_tracking_number() TO service_role;
+
 -- ---------------------------------------------------------------------------
 -- 5. TRACKING_EVENTS
 -- ---------------------------------------------------------------------------
@@ -112,6 +157,11 @@ CREATE TABLE IF NOT EXISTS public.tracking_events (
   status      TEXT        NOT NULL DEFAULT '',
   description TEXT        NOT NULL DEFAULT '',
   location    TEXT        NOT NULL DEFAULT '',
+  country     TEXT,
+  city        TEXT,
+  address     TEXT,
+  latitude    NUMERIC(9,6),
+  longitude   NUMERIC(9,6),
   event_date  TIMESTAMPTZ,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -119,6 +169,64 @@ CREATE TABLE IF NOT EXISTS public.tracking_events (
 -- ---------------------------------------------------------------------------
 -- 6. LOCATIONS
 -- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.contact_messages (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name       TEXT NOT NULL,
+  email           TEXT NOT NULL,
+  phone           TEXT,
+  subject         TEXT NOT NULL,
+  message         TEXT NOT NULL,
+  tracking_number TEXT,
+  status          TEXT NOT NULL DEFAULT 'NEW'
+                  CHECK (status IN ('NEW', 'READ', 'IN_PROGRESS', 'RESOLVED')),
+  admin_reply     TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS contact_messages_updated_at ON public.contact_messages;
+CREATE TRIGGER contact_messages_updated_at
+  BEFORE UPDATE ON public.contact_messages
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_status
+  ON public.contact_messages (status);
+CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at
+  ON public.contact_messages (created_at DESC);
+
+ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS public.quote_requests (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  service_type  TEXT NOT NULL,
+  origin_city   TEXT NOT NULL,
+  origin_state  TEXT NOT NULL,
+  destination_city TEXT NOT NULL,
+  destination_state TEXT NOT NULL,
+  weight        TEXT NOT NULL,
+  description   TEXT,
+  pickup_date   DATE NOT NULL,
+  full_name     TEXT NOT NULL,
+  email         TEXT NOT NULL,
+  phone         TEXT NOT NULL,
+  company       TEXT,
+  notes         TEXT,
+  status        TEXT NOT NULL DEFAULT 'NEW'
+                CHECK (status IN ('NEW', 'READ', 'IN_PROGRESS', 'QUOTED', 'RESOLVED')),
+  admin_reply   TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS quote_requests_updated_at ON public.quote_requests;
+CREATE TRIGGER quote_requests_updated_at
+  BEFORE UPDATE ON public.quote_requests
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_quote_requests_status ON public.quote_requests (status);
+CREATE INDEX IF NOT EXISTS idx_quote_requests_created_at ON public.quote_requests (created_at DESC);
+ALTER TABLE public.quote_requests ENABLE ROW LEVEL SECURITY;
+
 CREATE TABLE IF NOT EXISTS public.locations (
   id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   country       TEXT        NOT NULL,
@@ -191,6 +299,38 @@ $$;
 -- 10. RLS Policies — DROP IF EXISTS before each CREATE so re-runs never fail
 -- ---------------------------------------------------------------------------
 
+-- CONTACT_MESSAGES
+DROP POLICY IF EXISTS "Anyone can create contact messages" ON public.contact_messages;
+CREATE POLICY "Anyone can create contact messages"
+  ON public.contact_messages FOR INSERT TO anon, authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admins can read contact messages" ON public.contact_messages;
+CREATE POLICY "Admins can read contact messages"
+  ON public.contact_messages FOR SELECT TO authenticated
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can update contact messages" ON public.contact_messages;
+CREATE POLICY "Admins can update contact messages"
+  ON public.contact_messages FOR UPDATE TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- QUOTE_REQUESTS
+DROP POLICY IF EXISTS "Anyone can create quote requests" ON public.quote_requests;
+CREATE POLICY "Anyone can create quote requests"
+  ON public.quote_requests FOR INSERT TO anon, authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admins can read quote requests" ON public.quote_requests;
+CREATE POLICY "Admins can read quote requests"
+  ON public.quote_requests FOR SELECT TO authenticated
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can update quote requests" ON public.quote_requests;
+CREATE POLICY "Admins can update quote requests"
+  ON public.quote_requests FOR UPDATE TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
 -- SHIPMENTS
 DROP POLICY IF EXISTS "Public can read shipments by tracking number" ON public.shipments;
 CREATE POLICY "Public can read shipments by tracking number"
@@ -242,6 +382,11 @@ CREATE POLICY "Users can read own profile"
   ON public.profiles FOR SELECT TO authenticated
   USING (id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles FOR INSERT TO authenticated
+  WITH CHECK (id = auth.uid());
+
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile"
   ON public.profiles FOR UPDATE TO authenticated
@@ -256,6 +401,30 @@ DROP POLICY IF EXISTS "Admins can update all profiles" ON public.profiles;
 CREATE POLICY "Admins can update all profiles"
   ON public.profiles FOR UPDATE TO authenticated
   USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Backfill profiles for Auth users created before the trigger was installed.
+-- Existing profile rows are preserved, including administrator roles.
+INSERT INTO public.profiles (id, first_name, last_name, phone, account_type)
+SELECT
+  u.id,
+  COALESCE(u.raw_user_meta_data->>'first_name', ''),
+  COALESCE(u.raw_user_meta_data->>'last_name', ''),
+  u.raw_user_meta_data->>'phone',
+  CASE
+    WHEN u.raw_user_meta_data->>'account_type' IN ('customer', 'business', 'admin')
+      THEN u.raw_user_meta_data->>'account_type'
+    ELSE 'customer'
+  END
+FROM auth.users AS u
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.profiles AS p WHERE p.id = u.id
+);
+
+ALTER TABLE public.tracking_events ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE public.tracking_events ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE public.tracking_events ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE public.tracking_events ADD COLUMN IF NOT EXISTS latitude NUMERIC(9,6);
+ALTER TABLE public.tracking_events ADD COLUMN IF NOT EXISTS longitude NUMERIC(9,6);
 
 -- LOCATIONS
 DROP POLICY IF EXISTS "Public can read active locations" ON public.locations;

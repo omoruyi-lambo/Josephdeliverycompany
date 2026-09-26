@@ -1,28 +1,17 @@
 /**
  * pages/locations.js — Global Offices & Locations
  *
- * DATA ARCHITECTURE NOTE
+ * REAL DATA ARCHITECTURE
  * ──────────────────────────────────────────────────────────────────────────
- * The OFFICES array below is the temporary static data source.
- * In the admin phase this will be replaced by a Supabase query:
+ * This page fetches location data from Supabase using server-side rendering.
+ * Only active locations (is_active = true) are displayed to the public.
  *
- *   export async function getServerSideProps() {
- *     const supabase = createClient(url, anon);
- *     const { data } = await supabase
- *       .from('locations')
- *       .select('*')
- *       .eq('is_active', true)
- *       .order('country');
- *     return { props: { offices: data ?? [] } };
- *   }
- *
- * Admin-editable fields per office (maps to the `locations` Supabase table):
+ * Admin-editable fields per location (maps to the `locations` Supabase table):
  *   id, country, country_code, region, city, office_name, office_type,
  *   address, phone, email, opening_hours, latitude, longitude,
- *   image_url, description, is_active
+ *   image_url, image_alt, description, is_active
  *
- * Address / phone / email placeholders start with '[' so the UI can
- * distinguish unconfirmed data and render it differently.
+ * If office details are not yet confirmed, they are displayed neutrally.
  * ──────────────────────────────────────────────────────────────────────────
  */
 
@@ -31,131 +20,23 @@ import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { createSupabaseServerClient } from '../lib/supabase/server';
 
-/* ── OFFICE DATA ─────────────────────────────────────────────────────────── */
-const OFFICES = [
-  {
-    id: 'us-miami',
-    country: 'United States',
-    countryCode: 'US',
-    region: 'Americas',
-    city: 'Miami',
-    officeName: 'Miami Regional Office',
-    officeType: 'Regional Office',
-    timezone: 'EST (UTC-5)',
-    address: '[Official address to be confirmed]',
-    phone: '[Official phone to be confirmed]',
-    email: '[Official email to be confirmed]',
-    openingHours: 'Mon–Fri  9 am – 6 pm EST',
-    description: 'North America and Caribbean logistics operations.',
-    latitude: 25.7617,
-    longitude: -80.1918,
-    /* Pexels free-use logistics/cargo image — stable CDN URL */
-    imageUrl: 'https://images.pexels.com/photos/1427107/pexels-photo-1427107.jpeg?auto=compress&cs=tinysrgb&w=900&h=500&fit=crop',
-    imageAlt: 'Cargo shipping containers at a US port terminal',
-    isActive: true,
-  },
-  {
-    id: 'br-sao-paulo',
-    country: 'Brazil',
-    countryCode: 'BR',
-    region: 'Americas',
-    city: 'São Paulo',
-    officeName: 'São Paulo Regional Office',
-    officeType: 'Regional Office',
-    timezone: 'BRT (UTC-3)',
-    address: '[Official address to be confirmed]',
-    phone: '[Official phone to be confirmed]',
-    email: '[Official email to be confirmed]',
-    openingHours: 'Mon–Fri  9 am – 6 pm BRT',
-    description: 'Latin America logistics and customs operations.',
-    latitude: -23.5505,
-    longitude: -46.6333,
-    imageUrl: 'https://images.pexels.com/photos/906494/pexels-photo-906494.jpeg?auto=compress&cs=tinysrgb&w=900&h=500&fit=crop',
-    imageAlt: 'Modern logistics distribution warehouse facility',
-    isActive: true,
-  },
-  {
-    id: 'jp-tokyo',
-    country: 'Japan',
-    countryCode: 'JP',
-    region: 'Asia-Pacific',
-    city: 'Tokyo',
-    officeName: 'Tokyo Regional Office',
-    officeType: 'Regional Office',
-    timezone: 'JST (UTC+9)',
-    address: '[Official address to be confirmed]',
-    phone: '[Official phone to be confirmed]',
-    email: '[Official email to be confirmed]',
-    openingHours: 'Mon–Fri  9 am – 6 pm JST',
-    description: 'Asia-Pacific distribution and freight operations.',
-    latitude: 35.6762,
-    longitude: 139.6503,
-    imageUrl: 'https://images.pexels.com/photos/2226458/pexels-photo-2226458.jpeg?auto=compress&cs=tinysrgb&w=900&h=500&fit=crop',
-    imageAlt: 'Modern cargo freight terminal and logistics facility',
-    isActive: true,
-  },
-  {
-    id: 'in-mumbai',
-    country: 'India',
-    countryCode: 'IN',
-    region: 'Asia-Pacific',
-    city: 'Mumbai',
-    officeName: 'Mumbai Regional Office',
-    officeType: 'Regional Office',
-    timezone: 'IST (UTC+5:30)',
-    address: '[Official address to be confirmed]',
-    phone: '[Official phone to be confirmed]',
-    email: '[Official email to be confirmed]',
-    openingHours: 'Mon–Fri  9 am – 6 pm IST',
-    description: 'South Asia logistics and freight gateway.',
-    latitude: 19.0760,
-    longitude: 72.8777,
-    imageUrl: 'https://images.pexels.com/photos/4246120/pexels-photo-4246120.jpeg?auto=compress&cs=tinysrgb&w=900&h=500&fit=crop',
-    imageAlt: 'Large modern logistics warehouse interior',
-    isActive: true,
-  },
-  {
-    id: 'kr-seoul',
-    country: 'South Korea',
-    countryCode: 'KR',
-    region: 'Asia-Pacific',
-    city: 'Seoul',
-    officeName: 'Seoul Regional Office',
-    officeType: 'Regional Office',
-    timezone: 'KST (UTC+9)',
-    address: '[Official address to be confirmed]',
-    phone: '[Official phone to be confirmed]',
-    email: '[Official email to be confirmed]',
-    openingHours: 'Mon–Fri  9 am – 6 pm KST',
-    description: 'East Asia logistics, express, and air freight operations.',
-    latitude: 37.5665,
-    longitude: 126.9780,
-    imageUrl: 'https://images.pexels.com/photos/4481259/pexels-photo-4481259.jpeg?auto=compress&cs=tinysrgb&w=900&h=500&fit=crop',
-    imageAlt: 'Shipping containers at an international cargo port',
-    isActive: true,
-  },
-  {
-    id: 'fr-paris',
-    country: 'France',
-    countryCode: 'FR',
-    region: 'Europe',
-    city: 'Paris',
-    officeName: 'Paris Regional Office',
-    officeType: 'Regional Office',
-    timezone: 'CET (UTC+1)',
-    address: '[Official address to be confirmed]',
-    phone: '[Official phone to be confirmed]',
-    email: '[Official email to be confirmed]',
-    openingHours: 'Mon–Fri  9 am – 6 pm CET',
-    description: 'European logistics hub and customs clearance gateway.',
-    latitude: 48.8566,
-    longitude: 2.3522,
-    imageUrl: 'https://images.pexels.com/photos/3786214/pexels-photo-3786214.jpeg?auto=compress&cs=tinysrgb&w=900&h=500&fit=crop',
-    imageAlt: 'Modern European logistics and distribution facility',
-    isActive: true,
-  },
-];
+export async function getServerSideProps({ req, res }) {
+  const supabase = createSupabaseServerClient(req, res);
+  const { data: locations, error } = await supabase
+    .from('locations')
+    .select('*')
+    .eq('is_active', true)
+    .order('country');
+
+  if (error) {
+    console.error('Error fetching locations:', error);
+    return { props: { locations: [] } };
+  }
+
+  return { props: { locations: locations || [] } };
+}
 
 const REGION_ICONS = {
   Americas:      'fa-solid fa-earth-americas',
@@ -163,8 +44,28 @@ const REGION_ICONS = {
   Europe:        'fa-solid fa-earth-europe',
 };
 
-export default function LocationsPage() {
-  const activeOffices = useMemo(() => OFFICES.filter(o => o.isActive), []);
+export default function LocationsPage({ locations = [] }) {
+  // Transform database fields to match expected format
+  const activeOffices = useMemo(() => locations.map(loc => ({
+    id: loc.id,
+    country: loc.country,
+    countryCode: loc.country_code,
+    region: loc.region,
+    city: loc.city,
+    officeName: loc.office_name,
+    officeType: loc.office_type,
+    address: loc.address,
+    phone: loc.phone,
+    email: loc.email,
+    openingHours: loc.opening_hours,
+    description: loc.description,
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+    imageUrl: loc.image_url,
+    imageAlt: loc.image_alt,
+    isActive: loc.is_active,
+  })), [locations]);
+
   const countries = useMemo(() => [...new Set(activeOffices.map(o => o.country))], [activeOffices]);
   const regions   = useMemo(() => [...new Set(activeOffices.map(o => o.region))], [activeOffices]);
 
@@ -203,7 +104,7 @@ export default function LocationsPage() {
     <>
       <Head>
         <title>Global Offices & Locations — Josephdeliverycompany</title>
-        <meta name="description" content="Connect with Josephdeliverycompany through our international network of offices across the United States, Brazil, Japan, India, South Korea, and France." />
+        <meta name="description" content="Connect with Josephdeliverycompany through its international logistics network and verified location directory." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -214,12 +115,9 @@ export default function LocationsPage() {
         {/* Hero background — cargo/logistics photo */}
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'url(https://images.pexels.com/photos/1427107/pexels-photo-1427107.jpeg?auto=compress&cs=tinysrgb&w=1600&h=700&fit=crop)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 55%',
-          opacity: 0.2,
+          backgroundColor: '#0a1f3c',
+          opacity: 1,
         }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,rgba(6,21,41,0.96) 0%,rgba(10,31,60,0.55) 65%,rgba(10,31,60,0.15) 100%)' }} />
 
         <div style={{ position: 'relative', maxWidth: 1100, margin: '0 auto', padding: '88px 24px 80px' }}>
           <p style={eyebrow}>International Network</p>
@@ -256,42 +154,44 @@ export default function LocationsPage() {
       </section>
 
       {/* ── WORLD MAP — photographic strip ─────────────────────────────── */}
-      <section style={{ backgroundColor: '#061529', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px 40px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <p style={eyebrow}>Network Overview</p>
-              <h2 style={{ fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.2px' }}>
-                Our Global Footprint
-              </h2>
-            </div>
-            <p style={{ fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
-              Office locations are representational — exact addresses confirmed upon enquiry.
-            </p>
-          </div>
-
-          {/* Six-city photo strip */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 4, borderRadius: 8, overflow: 'hidden' }}
-            className="globe-strip">
-            {activeOffices.map(o => (
-              <div key={o.id} style={{ position: 'relative', aspectRatio: '2/3', overflow: 'hidden', cursor: 'default' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={o.imageUrl}
-                  alt={o.imageAlt}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.5) saturate(0.8)' }}
-                  loading="lazy"
-                />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 40%,rgba(6,21,41,0.92) 100%)' }} />
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 10px 12px' }}>
-                  <p style={{ fontSize: 9, fontWeight: 700, color: '#c0392b', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 2 }}>{o.countryCode}</p>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{o.city}</p>
-                </div>
+      {activeOffices.length > 0 && (
+        <section style={{ backgroundColor: '#061529', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px 40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <p style={eyebrow}>Network Overview</p>
+                <h2 style={{ fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.2px' }}>
+                  Our Global Footprint
+                </h2>
               </div>
-            ))}
+              <p style={{ fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
+                Office locations are representational — exact addresses confirmed upon enquiry.
+              </p>
+            </div>
+
+            {/* Photo strip */}
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(activeOffices.length, 6)},1fr)`, gap: 4, borderRadius: 8, overflow: 'hidden' }}
+              className="globe-strip">
+              {activeOffices.map(o => (
+                <div key={o.id} style={{ position: 'relative', aspectRatio: '2/3', overflow: 'hidden', cursor: 'default' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={o.imageUrl}
+                    alt={o.imageAlt}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.5) saturate(0.8)' }}
+                    loading="lazy"
+                  />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 40%,rgba(6,21,41,0.92) 100%)' }} />
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 10px 12px' }}>
+                    <p style={{ fontSize: 9, fontWeight: 700, color: '#c0392b', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 2 }}>{o.countryCode}</p>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{o.city}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <main>
         {/* ── SEARCH & FILTER ──────────────────────────────────────────── */}
@@ -369,16 +269,18 @@ export default function LocationsPage() {
         </section>
 
         {/* ── PENDING INFO NOTICE ───────────────────────────────────────── */}
-        <section style={{ backgroundColor: '#fff', borderTop: '1px solid #e2e6ea', borderBottom: '1px solid #e2e6ea', padding: '18px 24px' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: '#0369a1', flexShrink: 0 }} />
-            <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.5 }}>
-              <strong style={{ color: '#0a1f3c' }}>Office contact details are pending confirmation.</strong>{' '}
-              For immediate enquiries please{' '}
-              <Link href="/contact" style={{ color: '#c0392b', fontWeight: 600 }}>contact us directly</Link>.
-            </p>
-          </div>
-        </section>
+        {activeOffices.some(o => pending(o.address) || pending(o.phone) || pending(o.email)) && (
+          <section style={{ backgroundColor: '#fff', borderTop: '1px solid #e2e6ea', borderBottom: '1px solid #e2e6ea', padding: '18px 24px' }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: '#0369a1', flexShrink: 0 }} />
+              <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.5 }}>
+                <strong style={{ color: '#0a1f3c' }}>Office contact details are pending confirmation.</strong>{' '}
+                For immediate enquiries please{' '}
+                <Link href="/contact" style={{ color: '#c0392b', fontWeight: 600 }}>contact us directly</Link>.
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* ── CTA ──────────────────────────────────────────────────────── */}
         <section style={{ backgroundColor: '#0a1f3c', padding: '64px 24px', borderTop: '4px solid #c0392b' }}>
@@ -415,19 +317,17 @@ export default function LocationsPage() {
 /* ── Office Card ─────────────────────────────────────────────────────────── */
 function OfficeCard({ office }) {
   const pending = v => typeof v === 'string' && v.startsWith('[');
+  const [imageFailed, setImageFailed] = useState(!office.imageUrl);
 
   return (
-    <div style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div id={`location-${office.id}`} style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Photo */}
       <div style={{ position: 'relative', height: 200, overflow: 'hidden', backgroundColor: '#0a1f3c', flexShrink: 0 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={office.imageUrl}
-          alt={office.imageAlt}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.75 }}
-          loading="lazy"
-        />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(10,31,60,0.1) 0%,rgba(10,31,60,0.75) 100%)' }} />
+        {!imageFailed ? <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={office.imageUrl} alt={office.imageAlt || `${office.country} logistics facility`} onError={() => setImageFailed(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.75 }} loading="lazy" />
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.32)' }} />
+        </> : <div style={{ height: '100%', display: 'grid', placeItems: 'center', padding: 24, color: '#cbd5e1', textAlign: 'center' }}><div><i className="fa-solid fa-image" style={{ fontSize: 28, marginBottom: 10 }} /><p style={{ fontSize: 12 }}>Location photograph unavailable</p></div></div>}
 
         {/* City + country overlay */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 18px' }}>
@@ -445,21 +345,24 @@ function OfficeCard({ office }) {
 
       {/* Body */}
       <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <p style={{ fontSize: 13, color: '#4a5568', lineHeight: 1.6 }}>{office.description}</p>
+        <p style={{ fontSize: 13, color: '#4a5568', lineHeight: 1.6 }}>{office.description || 'International Logistics Network'}</p>
 
         <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 7 }}>
-          <Row icon="fa-regular fa-clock"   value={`${office.openingHours} · ${office.timezone}`} />
-          <Row icon="fa-solid fa-map-pin"   value={office.address}     pending={pending(office.address)} />
-          <Row icon="fa-solid fa-phone"     value={office.phone}       pending={pending(office.phone)} />
-          <Row icon="fa-solid fa-envelope"  value={office.email}       pending={pending(office.email)} />
+          {office.openingHours && <Row icon="fa-regular fa-clock"   value={office.openingHours} />}
+          {office.address && <Row icon="fa-solid fa-map-pin"   value={office.address}     pending={pending(office.address)} />}
+          {office.phone && <Row icon="fa-solid fa-phone"     value={office.phone}       pending={pending(office.phone)} />}
+          {office.email && <Row icon="fa-solid fa-envelope"  value={office.email}       pending={pending(office.email)} />}
         </div>
       </div>
 
       {/* Footer */}
       <div style={{ padding: '11px 20px', borderTop: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-        <Link href="/contact" style={{ fontSize: 13, fontWeight: 700, color: '#0a1f3c', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-          Enquire about this office <i className="fa-solid fa-arrow-right" style={{ fontSize: 10 }} />
-        </Link>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+          <Link href={`#location-${office.id}`} style={{ fontSize: 13, fontWeight: 700, color: '#0a1f3c', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+            VIEW LOCATION <i className="fa-solid fa-arrow-right" style={{ fontSize: 10 }} />
+          </Link>
+          {Number.isFinite(Number(office.latitude)) && Number.isFinite(Number(office.longitude)) && <a href={`https://www.openstreetmap.org/?mlat=${office.latitude}&mlon=${office.longitude}#map=12/${office.latitude}/${office.longitude}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#c0392b', fontWeight: 700, textDecoration: 'none' }}>OPEN MAP</a>}
+        </div>
       </div>
     </div>
   );

@@ -98,12 +98,9 @@ export default function HelpPage() {
           <div style={{ backgroundColor: '#0a1f3c', borderRadius: 12, padding: '36px 32px', marginTop: 40, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
             <div>
               <p style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Still need help?</p>
-              <p style={{ fontSize: 14, color: '#94a3b8' }}>Our support team is available 24/7 by phone, email, or live chat.</p>
+              <p style={{ fontSize: 14, color: '#94a3b8' }}>Send the support team a message through the secure contact form.</p>
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <a href="tel:+13055550192" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 20px', backgroundColor: '#c0392b', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none', borderRadius: 6 }}>
-                <i className="fa-solid fa-phone" /> Call Us
-              </a>
               <Link href="/contact" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 20px', backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff', fontWeight: 600, fontSize: 13, textDecoration: 'none', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)' }}>
                 <i className="fa-solid fa-envelope" /> Email Us
               </Link>
