@@ -53,8 +53,15 @@ export default function PrivacyPage() {
       </Head>
       <Header />
 
-      <section style={{ backgroundColor: '#0a1f3c', padding: '64px 24px 56px' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '64px 24px 56px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1800&q=80"
+          alt="Secure digital privacy and data protection"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.28 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.84)' }} />
+        <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
           <p style={eyebrow}>Legal</p>
           <h1 style={{ fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1 }}>Privacy Policy</h1>
           <p style={{ fontSize: 13, color: '#94a3b8' }}>Last updated: 1 January 2026</p>

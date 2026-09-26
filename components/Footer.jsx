@@ -1,8 +1,7 @@
 import Link from 'next/link';
 
-/* ─── DEMO CONTACT PLACEHOLDERS ────────────────────────────────────────────
-   Replace these values with the client's real contact details.
-   All contact info is centralised here for easy future updates.
+/* Client contact details are centralized here for straightforward replacement.
+   Official phone, email, and address values can be supplied here when verified.
    ─────────────────────────────────────────────────────────────────────── */
 const CONTACT = {
   phone: '+1 (305) 555-0192',

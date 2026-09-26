@@ -1,13 +1,17 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { supabase } from '../lib/supabase/client';
 
 export default function SignInPage() {
+  const router = useRouter();
   const [form, setForm] = useState({ email: '', password: '', remember: false });
   const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState(null);
 
   function validate() {
     const e = {};
@@ -20,13 +24,54 @@ export default function SignInPage() {
     const { name, value, type, checked } = e.target;
     setForm(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
     setErrors(p => ({ ...p, [name]: undefined }));
+    setAuthError(null);
   }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
-    setSubmitted(true);
+
+    setLoading(true);
+    setAuthError(null);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      });
+
+      if (error) {
+        setAuthError(error.message);
+        return;
+      }
+
+      // Wait a moment for session to be established
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Check if user has admin profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('account_type')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('[SignIn] Profile lookup error:', profileError);
+      }
+
+      // Redirect based on account type
+      if (profile?.account_type === 'admin') {
+        window.location.href = '/admin';
+      } else {
+        window.location.href = '/account';
+      }
+    } catch (err) {
+      setAuthError('An unexpected error occurred. Please try again.');
+      console.error('[SignIn] Error:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -39,7 +84,26 @@ export default function SignInPage() {
       </Head>
       <Header />
 
-      <main style={{ backgroundColor: '#f4f5f7', minHeight: '80vh', display: 'flex', alignItems: 'center', padding: '56px 24px' }}>
+      <main style={{ position: 'relative', backgroundColor: '#f4f5f7', minHeight: '80vh', overflow: 'hidden' }}>
+        {/* Background hero strip behind the form */}
+        <div aria-hidden style={{
+          position: 'absolute',
+          inset: 0,
+          bottom: '40%',
+          zIndex: 0,
+          backgroundColor: '#0a1f3c',
+          overflow: 'hidden',
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=2000&q=80"
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', opacity: 0.3 }}
+          />
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.78)' }} />
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', padding: '56px 24px' }}>
         <div style={{ maxWidth: 440, width: '100%', margin: '0 auto' }}>
           <p style={eyebrow}>My Account</p>
           <h1 style={{ fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 800, color: '#0a1f3c', marginBottom: 6, letterSpacing: '-0.3px' }}>
@@ -50,19 +114,14 @@ export default function SignInPage() {
             <Link href="/signup" style={{ color: '#c0392b', fontWeight: 600, textDecoration: 'none' }}>Create one for free</Link>
           </p>
 
-          {submitted ? (
-            <div style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 10, padding: '40px 32px', textAlign: 'center' }}>
-              <div style={{ width: 60, height: 60, borderRadius: '50%', backgroundColor: '#c0392b', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                <i className="fa-solid fa-check" style={{ color: '#fff', fontSize: 22 }} />
-              </div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0a1f3c', marginBottom: 10 }}>Signed in!</h2>
-              <p style={{ fontSize: 14, color: '#64748b', marginBottom: 24 }}>Redirecting you to your dashboard…</p>
-              <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', backgroundColor: '#c0392b', color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none', borderRadius: 6 }}>
-                Go to Homepage
-              </Link>
+          {authError && (
+            <div style={{ backgroundColor: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <i className="fa-solid fa-exclamation-circle" style={{ color: '#c0392b', fontSize: 16 }} />
+              <p style={{ color: '#c0392b', fontSize: 13, margin: 0 }}>{authError}</p>
             </div>
-          ) : (
-            <form onSubmit={submit} noValidate style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 10, padding: 'clamp(24px,5vw,40px)' }}>
+          )}
+
+          <form onSubmit={submit} noValidate style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 10, padding: 'clamp(24px,5vw,40px)' }}>
 
               {/* Social sign-in buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
@@ -91,13 +150,13 @@ export default function SignInPage() {
                 <Link href="/forgot-password" style={{ fontSize: 13, color: '#c0392b', textDecoration: 'none', fontWeight: 600 }}>Forgot password?</Link>
               </div>
 
-              <button type="submit" style={{ width: '100%', padding: 14, backgroundColor: '#c0392b', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 6, cursor: 'pointer', letterSpacing: '0.4px' }}
-                onMouseOver={e => e.currentTarget.style.backgroundColor = '#a93226'}
-                onMouseOut={e => e.currentTarget.style.backgroundColor = '#c0392b'}>
-                SIGN IN
+              <button type="submit" disabled={loading} style={{ width: '100%', padding: 14, backgroundColor: loading ? '#e2e6ea' : '#c0392b', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 6, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.4px' }}
+                onMouseOver={e => { if (!loading) e.currentTarget.style.backgroundColor = '#a93226'; }}
+                onMouseOut={e => { if (!loading) e.currentTarget.style.backgroundColor = '#c0392b'; }}>
+                {loading ? 'Signing in...' : 'SIGN IN'}
               </button>
             </form>
-          )}
+        </div>
         </div>
       </main>
       <Footer />

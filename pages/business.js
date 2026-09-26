@@ -6,7 +6,7 @@ import Footer from '../components/Footer';
 const PLANS = [
   {
     name: 'Starter',
-    price: '₦0 / month',
+    price: '$0 / month',
     desc: 'Pay as you ship. Ideal for small businesses just getting started.',
     features: ['Up to 50 shipments/month', 'Standard & express delivery', 'Online tracking', 'Email support', 'Monthly invoice'],
     cta: 'Start Free',
@@ -15,7 +15,7 @@ const PLANS = [
   },
   {
     name: 'Business',
-    price: '₦15,000 / month',
+    price: '$149 / month',
     desc: 'Discounted rates and priority handling for growing businesses.',
     features: ['Up to 300 shipments/month', 'Up to 15% volume discount', 'Priority pickup slots', 'Dedicated account manager', 'API integration', 'Weekly reports'],
     cta: 'Get Started',
@@ -54,8 +54,15 @@ export default function BusinessPage() {
       <Header />
 
       {/* Hero */}
-      <section style={{ backgroundColor: '#0a1f3c', padding: '80px 24px 72px' }}>
-        <div style={{ maxWidth: 860, margin: '0 auto' }}>
+      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '80px 24px 72px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=1800&q=80"
+          alt="Business logistics and warehouse operations"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.82)' }} />
+        <div style={{ position: 'relative', maxWidth: 860, margin: '0 auto' }}>
           <p style={eyebrow}>For Businesses</p>
           <h1 style={{ fontSize: 'clamp(30px,5vw,52px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 18, lineHeight: 1.08 }}>
             Logistics Built for<br />Business Scale

@@ -19,7 +19,7 @@ const SECTIONS = [
     faqs: [
       { q: 'How do I book a shipment?', a: 'Use our online quote tool at josephdeliverycompany.com/quote, choose your service, enter pickup and delivery details, and confirm. A courier will collect within the confirmed window.' },
       { q: 'What packaging should I use?', a: 'Use a sturdy double-wall cardboard box with at least 5 cm of padding on all sides. Fragile items should be bubble-wrapped individually. Seal all seams with strong packing tape.' },
-      { q: 'Can I change my delivery address after booking?', a: 'Address changes are accepted up to 2 hours after booking is confirmed. Log in to your account or call our support line. A ₦500 amendment fee may apply.' },
+      { q: 'Can I change my delivery address after booking?', a: 'Address changes are accepted up to 2 hours after booking is confirmed. Log in to your account or call our support line. A $5 amendment fee may apply.' },
       { q: 'What if I miss my delivery?', a: 'Our courier will attempt delivery twice. After the second failed attempt, the parcel is held at your nearest depot for 5 business days before return-to-sender.' },
       { q: 'Do you deliver on weekends?', a: 'Saturday delivery is available in Lagos, Abuja, and Port Harcourt on express bookings. Sunday delivery is available in Lagos only. A weekend surcharge applies.' },
     ],
@@ -45,7 +45,7 @@ const SECTIONS = [
     faqs: [
       { q: 'What do I do if my parcel is lost?', a: 'If tracking shows no movement for 5+ business days on a domestic shipment (or 14 days international), contact support to open a trace. Claims must be filed within 30 days of the expected delivery date.' },
       { q: 'What do I do if my parcel arrived damaged?', a: 'Photograph the damage before opening further. Contact support within 48 hours of delivery with images and your tracking number. Do not discard the packaging — it may be needed for the claim.' },
-      { q: 'How much am I covered for?', a: 'Standard coverage is ₦50,000 for domestic shipments. Extended insurance (up to declared value) is available at checkout. International shipments include coverage per the Warsaw Convention unless extended cover is purchased.' },
+      { q: 'How much am I covered for?', a: 'Standard coverage is $500 for domestic shipments. Extended insurance (up to declared value) is available at checkout. International shipments include coverage per the Warsaw Convention unless extended cover is purchased.' },
     ],
   },
 ];
@@ -66,7 +66,15 @@ export default function FAQPage() {
       </Head>
       <Header />
 
-      <section style={{ backgroundColor: '#0a1f3c', padding: '72px 24px 64px', textAlign: 'center' }}>
+      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '72px 24px 64px', textAlign: 'center' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1800&q=80"
+          alt="Customer support team helping with logistics questions"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.82)' }} />
+        <div style={{ position: 'relative' }}>
         <p style={eyebrow}>FAQ</p>
         <h1 style={{ fontSize: 'clamp(28px,5vw,50px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 14, lineHeight: 1.08 }}>
           Frequently Asked Questions
@@ -74,6 +82,7 @@ export default function FAQPage() {
         <p style={{ fontSize: 'clamp(14px,1.8vw,16px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 480, margin: '0 auto' }}>
           Can't find what you need? <Link href="/contact" style={{ color: '#fff', fontWeight: 600, textDecoration: 'none' }}>Contact our team</Link> — we respond within 2 hours.
         </p>
+        </div>
       </section>
 
       <main style={{ backgroundColor: '#f4f5f7', padding: '56px 24px 80px' }}>

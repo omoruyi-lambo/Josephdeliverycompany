@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabase/client';
 
 const NAV_LINKS = [
   { label: 'Shipping', href: '/shipping', hasDropdown: false },
@@ -11,7 +13,49 @@ const NAV_LINKS = [
 ];
 
 export default function Header() {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function loadProfile(userId) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, account_type')
+      .eq('id', userId)
+      .single();
+    setProfile(data);
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push('/');
+  }
 
   return (
     <header style={{
@@ -118,40 +162,104 @@ export default function Header() {
               className="desktop-nav"
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              <Link
-                href="/signin"
-                className="signin-btn"
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#0a1f3c',
-                  textDecoration: 'none',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  whiteSpace: 'nowrap',
-                  transition: 'background-color 0.15s',
-                }}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                className="signup-btn"
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#0a1f3c',
-                  textDecoration: 'none',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  whiteSpace: 'nowrap',
-                  transition: 'background-color 0.15s',
-                }}
-              >
-                Sign Up
-              </Link>
+              {loading ? (
+                <span style={{ fontSize: '13px', color: '#64748b' }}>Loading...</span>
+              ) : user ? (
+                <>
+                  <Link
+                    href="/account"
+                    style={{
+                      fontSize: '13px',
+                      color: '#374151',
+                      fontWeight: 500,
+                      textDecoration: 'none',
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      transition: 'background-color 0.15s',
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4f5f7'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    {profile?.first_name || profile?.last_name
+                      ? `${profile.first_name} ${profile.last_name}`
+                      : user.email}
+                  </Link>
+                  {profile?.account_type === 'admin' && (
+                    <button
+                      onClick={() => window.location.href = '/admin'}
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: '#c0392b',
+                        backgroundColor: 'transparent',
+                        border: '1px solid #c0392b',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Admin
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSignOut}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#0a1f3c',
+                      backgroundColor: 'transparent',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'background-color 0.15s',
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4f5f7'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/signin"
+                    className="signin-btn"
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#0a1f3c',
+                      textDecoration: 'none',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      whiteSpace: 'nowrap',
+                      transition: 'background-color 0.15s',
+                    }}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="signup-btn"
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#0a1f3c',
+                      textDecoration: 'none',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      whiteSpace: 'nowrap',
+                      transition: 'background-color 0.15s',
+                    }}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
               <Link
                 href="/quote"
                 className="quote-btn"
@@ -223,40 +331,106 @@ export default function Header() {
             ))}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '18px' }}>
-              <Link
-                href="/signin"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: 'block',
-                  padding: '13px 16px',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  color: '#0a1f3c',
-                  textDecoration: 'none',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  textAlign: 'center',
-                }}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: 'block',
-                  padding: '13px 16px',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  color: '#0a1f3c',
-                  textDecoration: 'none',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  textAlign: 'center',
-                }}
-              >
-                Sign Up
-              </Link>
+              {loading ? (
+                <span style={{ fontSize: '13px', color: '#64748b', textAlign: 'center' }}>Loading...</span>
+              ) : user ? (
+                <>
+                  <Link
+                    href="/account"
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      display: 'block',
+                      padding: '13px 16px',
+                      fontSize: '14px',
+                      color: '#374151',
+                      textDecoration: 'none',
+                      borderBottom: '1px solid #f3f4f6',
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>
+                      {profile?.first_name || profile?.last_name
+                        ? `${profile.first_name} ${profile.last_name}`
+                        : user.email}
+                    </span>
+                  </Link>
+                  {profile?.account_type === 'admin' && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMobileOpen(false)}
+                      style={{
+                        display: 'block',
+                        padding: '13px 16px',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        color: '#c0392b',
+                        textDecoration: 'none',
+                        border: '1px solid #c0392b',
+                        borderRadius: '6px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setMobileOpen(false);
+                    }}
+                    style={{
+                      display: 'block',
+                      padding: '13px 16px',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      color: '#0a1f3c',
+                      backgroundColor: 'transparent',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/signin"
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      display: 'block',
+                      padding: '13px 16px',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      color: '#0a1f3c',
+                      textDecoration: 'none',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      display: 'block',
+                      padding: '13px 16px',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      color: '#0a1f3c',
+                      textDecoration: 'none',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
               <Link
                 href="/quote"
                 onClick={() => setMobileOpen(false)}

@@ -177,21 +177,10 @@ function EmptyState() {
         Use the search bar to track your Josephdeliverycompany shipment.
       </p>
       <p style={{ fontSize: '13px', color: '#94a3b8' }}>
-        Try:{' '}
-        <Link href="/track?tracking=JDC-2026-00127"
-          style={{ color: '#0a1f3c', fontWeight: 600, fontFamily: 'monospace' }}>
+        Example format:{' '}
+        <span style={{ color: '#0a1f3c', fontWeight: 600, fontFamily: 'monospace' }}>
           JDC-2026-00127
-        </Link>
-        {' · '}
-        <Link href="/track?tracking=JDC-2026-00128"
-          style={{ color: '#0a1f3c', fontWeight: 600, fontFamily: 'monospace' }}>
-          JDC-2026-00128
-        </Link>
-        {' · '}
-        <Link href="/track?tracking=JDC-2026-00129"
-          style={{ color: '#0a1f3c', fontWeight: 600, fontFamily: 'monospace' }}>
-          JDC-2026-00129
-        </Link>
+        </span>
       </p>
     </div>
   );

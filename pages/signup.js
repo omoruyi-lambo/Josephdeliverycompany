@@ -1,10 +1,13 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { supabase } from '../lib/supabase/client';
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -15,8 +18,9 @@ export default function SignUpPage() {
     accountType: 'personal',
     agree: false,
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [authError, setAuthError] = useState(null);
 
   function validate() {
     const e = {};
@@ -34,13 +38,65 @@ export default function SignUpPage() {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
+    setAuthError(null);
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    setSubmitted(true);
+
+    setLoading(true);
+    setAuthError(null);
+
+    try {
+      // Map account type to database value
+      const accountTypeValue = form.accountType === 'personal' ? 'customer' : 'business';
+
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            first_name: form.firstName,
+            last_name: form.lastName,
+            phone: form.phone,
+            account_type: accountTypeValue,
+          },
+        },
+      });
+
+      if (error) {
+        setAuthError(error.message);
+        return;
+      }
+
+      // If email confirmation is enabled, show success message
+      // Otherwise, redirect to signin
+      if (data.user && !data.session) {
+        // Email confirmation required
+        setErrors({});
+        setForm((prev) => ({ ...prev, _success: true }));
+      } else if (data.session) {
+        // Auto-signed in, redirect based on account type
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('account_type')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile?.account_type === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
+      }
+    } catch (err) {
+      setAuthError('An unexpected error occurred. Please try again.');
+      console.error('[SignUp] Error:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -54,7 +110,26 @@ export default function SignUpPage() {
 
       <Header />
 
-      <main style={{ backgroundColor: '#f4f5f7', minHeight: '80vh', padding: '56px 24px 80px' }}>
+      <main style={{ position: 'relative', backgroundColor: '#f4f5f7', minHeight: '80vh', overflow: 'hidden' }}>
+        {/* Background hero strip behind the form */}
+        <div aria-hidden style={{
+          position: 'absolute',
+          inset: 0,
+          bottom: '55%',
+          zIndex: 0,
+          backgroundColor: '#0a1f3c',
+          overflow: 'hidden',
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=2000&q=80"
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', opacity: 0.3 }}
+          />
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.78)' }} />
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 1, padding: '56px 24px 80px' }}>
         <div style={{ maxWidth: '520px', margin: '0 auto' }}>
 
           {/* Eyebrow */}
@@ -69,7 +144,14 @@ export default function SignUpPage() {
             <Link href="/signin" style={{ color: '#c0392b', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
           </p>
 
-          {submitted ? (
+          {authError && (
+            <div style={{ backgroundColor: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <i className="fa-solid fa-exclamation-circle" style={{ color: '#c0392b', fontSize: 16 }} />
+              <p style={{ color: '#c0392b', fontSize: 13, margin: 0 }}>{authError}</p>
+            </div>
+          )}
+
+          {form._success ? (
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '10px',
@@ -82,16 +164,16 @@ export default function SignUpPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px',
               }}>
-                <i className="fa-solid fa-check" style={{ color: '#fff', fontSize: '26px' }} />
+                <i className="fa-solid fa-envelope" style={{ color: '#fff', fontSize: '26px' }} />
               </div>
               <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#0a1f3c', marginBottom: '12px' }}>
-                Account created!
+                Check your email
               </h2>
               <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.6, marginBottom: '28px' }}>
-                Welcome to Josephdeliverycompany. A confirmation email has been sent to <strong>{form.email}</strong>.
+                We've sent a confirmation link to <strong>{form.email}</strong>. Click the link to activate your account.
               </p>
               <Link
-                href="/"
+                href="/signin"
                 style={{
                   display: 'inline-block',
                   padding: '12px 28px',
@@ -103,7 +185,7 @@ export default function SignUpPage() {
                   textDecoration: 'none',
                 }}
               >
-                Go to Homepage
+                Go to Sign In
               </Link>
             </div>
           ) : (
@@ -180,26 +262,28 @@ export default function SignUpPage() {
 
               <button
                 type="submit"
+                disabled={loading}
                 style={{
                   width: '100%',
                   padding: '14px',
-                  backgroundColor: '#c0392b',
+                  backgroundColor: loading ? '#e2e6ea' : '#c0392b',
                   color: '#ffffff',
                   fontWeight: 700,
                   fontSize: '15px',
                   letterSpacing: '0.5px',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: 'pointer',
+                  cursor: loading ? 'not-allowed' : 'pointer',
                   transition: 'background-color 0.15s',
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#a93226')}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#c0392b')}
+                onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#a93226'; }}
+                onMouseOut={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#c0392b'; }}
               >
-                CREATE ACCOUNT
+                {loading ? 'Creating account...' : 'CREATE ACCOUNT'}
               </button>
             </form>
           )}
+        </div>
         </div>
       </main>
 

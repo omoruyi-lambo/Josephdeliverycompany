@@ -13,10 +13,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Josephdeliverycompany — Delivering What Matters</title>
+        <title>JOSEPHDELIVERYCOMPANY | Shipping &amp; Logistics</title>
         <meta
           name="description"
-          content="Reliable shipping and delivery solutions for individuals and businesses. Express, domestic, international, and freight services."
+          content="Reliable shipping and logistics solutions for domestic and international deliveries."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />

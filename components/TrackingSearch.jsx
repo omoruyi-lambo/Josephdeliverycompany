@@ -38,8 +38,17 @@ export default function TrackingSearch({ initialValue = '' }) {
   }
 
   return (
-    <div style={{ backgroundColor: '#0a1f3c', padding: '48px 0 52px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
+    <div style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '48px 0 52px' }}>
+      {/* Hero background image for tracking search */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=2000&q=80"
+        alt="Express delivery truck on the road"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.28 }}
+      />
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.76)' }} />
+
+      <div style={{ position: 'relative', maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
 
         <p style={{
           fontSize: '11px',

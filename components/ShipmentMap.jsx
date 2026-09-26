@@ -120,7 +120,7 @@ const MARKER_COLOUR = {
   IN_TRANSIT:        '#c0392b',
   OUT_FOR_DELIVERY:  '#ca8a04',
   DELIVERED:         '#16a34a',
-  ON_HOLD:           '#7c3aed',  /* purple — distinct from transit colours */
+  ON_HOLD:           '#c0392b',
   COLLECTED:         '#0369a1',
   BOOKED:            '#64748b',
   FAILED_DELIVERY:   '#dc2626',
@@ -128,13 +128,44 @@ const MARKER_COLOUR = {
   DEFAULT:           '#0a1f3c',
 };
 
+function isValidCoordinatePair(coords) {
+  return Boolean(
+    coords &&
+    Number.isFinite(Number(coords.lat)) &&
+    Number.isFinite(Number(coords.lng)) &&
+    Number(coords.lat) >= -90 && Number(coords.lat) <= 90 &&
+    Number(coords.lng) >= -180 && Number(coords.lng) <= 180
+  );
+}
+
 export default function ShipmentMap({ mapData, statusCode }) {
   if (!mapData) return null;
 
   const {
     originCity, destinationCity, currentCity,
-    originCoords, destinationCoords, currentPosition,
+    originCoords, destinationCoords, currentCoords: explicitCurrentCoords, currentPosition,
   } = mapData;
+
+  if (!isValidCoordinatePair(originCoords) || !isValidCoordinatePair(destinationCoords)) {
+    return (
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e6ea', borderRadius: '3px', marginBottom: '24px', padding: '48px 24px', textAlign: 'center', color: '#4a5568' }}>
+        <i className="fa-solid fa-location-dot" style={{ color: '#c0392b', fontSize: '24px', marginBottom: '14px' }} />
+        <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.6 }}>Location coordinates are currently unavailable.</p>
+      </div>
+    );
+  }
+
+  const hasExplicitCurrent = (
+    explicitCurrentCoords &&
+    explicitCurrentCoords.lat != null && Number.isFinite(explicitCurrentCoords.lat) &&
+    explicitCurrentCoords.lng != null && isValidCoordinatePair(explicitCurrentCoords)
+  );
+
+  const effectiveCurrentCoords = hasExplicitCurrent
+    ? explicitCurrentCoords
+    : interpolate(originCoords, destinationCoords, Number.isFinite(Number(currentPosition))
+      ? Math.max(0, Math.min(1, Number(currentPosition)))
+      : 0);
 
   /* ── Build dynamic bounding box from this shipment's actual coordinates ── */
   const bbox = buildBBox(originCoords, destinationCoords);
@@ -142,9 +173,7 @@ export default function ShipmentMap({ mapData, statusCode }) {
   /* ── Project all key points into SVG space ────────────────────────────── */
   const originPt  = toSVG(originCoords.lat,     originCoords.lng,     bbox);
   const destPt    = toSVG(destinationCoords.lat, destinationCoords.lng, bbox);
-
-  const currentCoords = interpolate(originCoords, destinationCoords, currentPosition);
-  const currentPt     = toSVG(currentCoords.lat, currentCoords.lng, bbox);
+  const currentPt = toSVG(effectiveCurrentCoords.lat, effectiveCurrentCoords.lng, bbox);
 
   const markerColour = MARKER_COLOUR[statusCode] || MARKER_COLOUR.DEFAULT;
 
@@ -160,8 +189,11 @@ export default function ShipmentMap({ mapData, statusCode }) {
 
   /* Approximate arc length for dash-array progress indicator */
   const totalLen     = Math.hypot(destPt.x - originPt.x, destPt.y - originPt.y) * 1.1;
-  const completedLen = totalLen * Math.max(0, Math.min(1, currentPosition));
-  const remainingLen = totalLen * (1 - Math.max(0, Math.min(1, currentPosition)));
+  const progress = Number.isFinite(Number(currentPosition))
+    ? Math.max(0, Math.min(1, Number(currentPosition)))
+    : 0;
+  const completedLen = totalLen * progress;
+  const remainingLen = totalLen * (1 - progress);
 
   /* ── Decide whether to draw the Nigeria polygon ──────────────────────── */
   const drawNigeria = (

@@ -10,7 +10,7 @@ const SHIPPING_OPTIONS = [
     badge: 'Fastest',
     badgeColor: '#c0392b',
     time: 'Next Day',
-    price: 'From ₦4,500',
+    price: 'From $35',
     desc: 'When time is critical. Door-to-door pickup and delivery by the next business day for parcels up to 30 kg.',
     features: ['Next-business-day delivery', 'Real-time tracking', 'SMS & email alerts', 'Signature confirmation'],
     href: '/services/express',
@@ -21,8 +21,8 @@ const SHIPPING_OPTIONS = [
     badge: 'Most Popular',
     badgeColor: '#0a1f3c',
     time: '3–5 Days',
-    price: 'From ₦1,800',
-    desc: 'Dependable, cost-effective delivery for non-urgent parcels across Nigeria. Ideal for e-commerce and personal shipments.',
+    price: 'From $15',
+    desc: 'Dependable, cost-effective delivery for non-urgent parcels across our coverage network. Ideal for e-commerce and personal shipments.',
     features: ['3–5 business days', 'Online tracking', 'Proof of delivery', 'Up to 70 kg'],
     href: '/services/domestic',
   },
@@ -32,7 +32,7 @@ const SHIPPING_OPTIONS = [
     badge: 'Global',
     badgeColor: '#1d6fa4',
     time: '5–14 Days',
-    price: 'From ₦18,000',
+    price: 'From $149',
     desc: 'Send parcels and documents to over 180 countries. Full customs documentation support included.',
     features: ['180+ countries', 'Customs clearance', 'Door-to-door', 'Insurance available'],
     href: '/services/international',
@@ -71,8 +71,15 @@ export default function ShippingPage() {
       <Header />
 
       {/* Hero */}
-      <section style={{ backgroundColor: '#0a1f3c', padding: '72px 24px 64px' }}>
-        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '72px 24px 64px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=1800&q=80"
+          alt="Delivery van with packages ready for shipping"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.8)' }} />
+        <div style={{ position: 'relative', maxWidth: '860px', margin: '0 auto' }}>
           <p style={eyebrow}>Shipping</p>
           <h1 style={{ fontSize: 'clamp(30px,5vw,52px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: '18px', lineHeight: 1.08 }}>
             The Right Service<br />for Every Shipment

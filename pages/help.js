@@ -48,7 +48,15 @@ export default function HelpPage() {
       <Header />
 
       {/* Hero */}
-      <section style={{ backgroundColor: '#0a1f3c', padding: '72px 24px 64px', textAlign: 'center' }}>
+      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', padding: '72px 24px 64px', textAlign: 'center' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1800&q=80"
+          alt="Help and support centre team"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.82)' }} />
+        <div style={{ position: 'relative' }}>
         <p style={eyebrow}>Help Centre</p>
         <h1 style={{ fontSize: 'clamp(28px,5vw,50px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.08 }}>
           How Can We Help?
@@ -60,6 +68,7 @@ export default function HelpPage() {
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link href="/track" style={btnWhite}><i className="fa-solid fa-magnifying-glass" style={{ fontSize: 13 }} /> TRACK SHIPMENT</Link>
           <Link href="/contact" style={btnGhost}>CONTACT SUPPORT</Link>
+        </div>
         </div>
       </section>
 

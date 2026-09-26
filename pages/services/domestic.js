@@ -8,7 +8,7 @@ export default function DomesticPage() {
       heroDesc="Reliable, cost-effective delivery across all 36 states and the FCT. Ideal for individuals, small businesses, and e-commerce sellers."
       imgSrc="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1400&q=80"
       imgAlt="Delivery van on a road for domestic shipping across Nigeria"
-      price="From ₦1,800"
+      price="From $15"
       deliveryTime="3–5 Business Days"
       metaDesc="Affordable domestic shipping across all of Nigeria. Tracked parcels, proof of delivery, up to 70 kg. Perfect for e-commerce and personal shipments."
       features={[
