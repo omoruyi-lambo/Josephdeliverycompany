@@ -37,4 +37,6 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
+For the chatbot, add `GROQ_API_KEY` as a server-side Environment Variable in the Vercel project settings for each environment you deploy (Production, Preview, or Development), then redeploy. Do not use a `NEXT_PUBLIC_` prefix. The `/api/chat` route calls Groq from the server.
+
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.

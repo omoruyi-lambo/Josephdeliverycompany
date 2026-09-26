@@ -80,7 +80,7 @@ export default function FAQPage() {
           Frequently Asked Questions
         </h1>
         <p style={{ fontSize: 'clamp(14px,1.8vw,16px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 480, margin: '0 auto' }}>
-          Can't find what you need? <Link href="/contact" style={{ color: '#fff', fontWeight: 600, textDecoration: 'none' }}>Contact our team</Link> through the secure form.
+          Can&apos;t find what you need? <Link href="/contact" style={{ color: '#fff', fontWeight: 600, textDecoration: 'none' }}>Contact our team</Link> through the secure form.
         </p>
         </div>
       </section>

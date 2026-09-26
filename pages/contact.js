@@ -36,7 +36,8 @@ export default function ContactPage() {
     const { name, value } = e.target;
     setForm(p => ({ ...p, [name]: value }));
     setErrors(p => ({ ...p, [name]: undefined }));
-    if (submitResult) setSubmitResult(null);
+    setSent(false);
+    setSubmitError('');
   }
 
   async function submit(e) {
@@ -89,7 +90,7 @@ export default function ContactPage() {
 
           {/* Form */}
           <div style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 12, padding: 'clamp(24px,5vw,40px)' }}>
-            {submitResult?.ok ? (
+            {sent ? (
               <div style={{ textAlign: 'center', padding: '32px 0' }}>
                 <div style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                   <i className="fa-solid fa-check" style={{ color: '#16a34a', fontSize: 24 }} />
@@ -102,20 +103,6 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={submit} noValidate>
                 <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0a1f3c', marginBottom: 24 }}>Send a Message</h2>
-
-                {submitResult?.ok === false && (
-                  <div style={{ backgroundColor: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, padding: '16px', marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <i className="fa-solid fa-exclamation-circle" style={{ color: COLORS.red, fontSize: 20, marginTop: 2 }} />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ color: COLORS.red, fontWeight: 600, margin: 0, marginBottom: 6 }}>{submitResult.message}</p>
-                      {submitResult.errors && submitResult.errors.length > 0 && (
-                        <ul style={{ margin: 0, paddingLeft: 18, color: '#991b1b', fontSize: 13 }}>
-                          {submitResult.errors.map((err, i) => <li key={i}>{err}</li>)}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <Field label="Full Name" name="name" value={form.name} onChange={handle} error={errors.name} placeholder="John Doe" />

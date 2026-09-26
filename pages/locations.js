@@ -1,18 +1,9 @@
 /**
  * pages/locations.js — International Logistics Network
  *
- * REAL DATA ARCHITECTURE
- * ──────────────────────────────────────────────────────────────────────────
- * This page fetches location data from Supabase using server-side rendering.
- * Only active locations (is_active = true) are displayed to the public.
- *
- * Admin-editable fields per location (maps to the `locations` Supabase table):
- *   id, country, country_code, region, city, office_name, office_type,
- *   address, phone, email, opening_hours, latitude, longitude,
- *   image_url, image_alt, description, is_active
- *
- * If office details are not yet confirmed, they are displayed neutrally.
- * ──────────────────────────────────────────────────────────────────────────
+ * All data comes from Supabase `locations` table.
+ * No fake addresses, no mock data, no SVG illustrations in cards.
+ * Only active (is_active = true) records are shown publicly.
  */
 
 import Head from 'next/head';
@@ -21,54 +12,26 @@ import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../lib/supabase/client';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { createSupabaseServerClient } from '../lib/supabase/server';
 
-export async function getServerSideProps({ req, res }) {
-  const supabase = createSupabaseServerClient(req, res);
-  const { data: locations, error } = await supabase
-    .from('locations')
-    .select('*')
-    .eq('is_active', true)
-    .order('country');
-
-  if (error) {
-    console.error('Error fetching locations:', error);
-    return { props: { locations: [] } };
-  }
-
-  return { props: { locations: locations || [] } };
-}
-
-const REGION_ICONS = {
-  Americas:      'fa-solid fa-earth-americas',
-  'Asia-Pacific': 'fa-solid fa-earth-asia',
-  Europe:        'fa-solid fa-earth-europe',
+const COLORS = {
+  navy: '#0a1f3c',
+  navyDark: '#061529',
+  red: '#c0392b',
+  redHover: '#a93226',
+  gray: '#f4f5f7',
+  border: '#e2e6ea',
+  text: '#1a1a2e',
+  muted: '#64748b',
 };
 
-export default function LocationsPage({ locations = [] }) {
-  // Transform database fields to match expected format
-  const activeOffices = useMemo(() => locations.map(loc => ({
-    id: loc.id,
-    country: loc.country,
-    countryCode: loc.country_code,
-    region: loc.region,
-    city: loc.city,
-    officeName: loc.office_name,
-    officeType: loc.office_type,
-    address: loc.address,
-    phone: loc.phone,
-    email: loc.email,
-    openingHours: loc.opening_hours,
-    description: loc.description,
-    latitude: loc.latitude,
-    longitude: loc.longitude,
-    imageUrl: loc.image_url,
-    imageAlt: loc.image_alt,
-    isActive: loc.is_active,
-  })), [locations]);
-
-  const countries = useMemo(() => [...new Set(activeOffices.map(o => o.country))], [activeOffices]);
-  const regions   = useMemo(() => [...new Set(activeOffices.map(o => o.region))], [activeOffices]);
+const PRIMARY_COUNTRIES = [
+  'United States',
+  'Brazil',
+  'Japan',
+  'India',
+  'South Korea',
+  'France',
+];
 
 const HERO_IMAGE =
   'https://images.pexels.com/photos/1427107/pexels-photo-1427107.jpeg?auto=compress&cs=tinysrgb&w=1600&h=700&fit=crop';
@@ -812,52 +775,32 @@ export default function LocationsPage() {
   return (
     <>
       <Head>
-        <title>Global Offices & Locations — Josephdeliverycompany</title>
-        <meta name="description" content="Connect with Josephdeliverycompany through its international logistics network and verified location directory." />
+        <title>International Network — Locations — Josephdeliverycompany</title>
+        <meta
+          name="description"
+          content="JOSEPHDELIVERYCOMPANY international logistics network across the United States, Brazil, Japan, India, South Korea, and France. View active locations with photography, maps, and verified contact information."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header />
 
-      {/* ── HERO ───────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', backgroundColor: '#0a1f3c', overflow: 'hidden', minHeight: 420 }}>
-        {/* Hero background — cargo/logistics photo */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundColor: '#0a1f3c',
-          opacity: 1,
-        }} />
-
-        <div style={{ position: 'relative', maxWidth: 1100, margin: '0 auto', padding: '88px 24px 80px' }}>
-          <p style={eyebrow}>International Network</p>
-          <h1 style={{ fontSize: 'clamp(32px,5vw,54px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 20, lineHeight: 1.06, maxWidth: 680 }}>
-            Global Offices &amp; Locations
-          </h1>
-          <p style={{ fontSize: 'clamp(15px,1.8vw,18px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 520, marginBottom: 48 }}>
-            Connect with JOSEPHDELIVERYCOMPANY through our international network of offices and logistics locations.
-          </p>
-
-          {/* Region pills */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 44 }}>
-            {regions.map(r => (
-              <span key={r} style={{ padding: '5px 14px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, fontSize: 12, fontWeight: 600, color: '#cbd5e1', backgroundColor: 'rgba(255,255,255,0.06)', letterSpacing: '0.5px' }}>
-                {r}
-              </span>
-            ))}
-          </div>
-
-          {/* Stat strip */}
-          <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
-            {[
-              { n: activeOffices.length, label: 'International Offices' },
-              { n: regions.length, label: 'Regions' },
-              { n: countries.length, label: 'Countries' },
-            ].map(s => (
-              <div key={s.label}>
-                <p style={{ fontSize: 'clamp(28px,4vw,42px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{s.n}</p>
-                <p style={{ fontSize: 11, color: '#64748b', marginTop: 5, textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700 }}>{s.label}</p>
-              </div>
-            ))}
+      {loading ? (
+        <div
+          style={{
+            minHeight: '50vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: COLORS.gray,
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <i
+              className="fa-solid fa-circle-notch fa-spin"
+              style={{ fontSize: 32, color: COLORS.red, marginBottom: 16 }}
+            />
+            <p style={{ fontSize: 14, color: COLORS.muted }}>Loading locations...</p>
           </div>
         </div>
       ) : (
@@ -890,59 +833,59 @@ export default function LocationsPage() {
               }}
             />
 
-      {/* ── WORLD MAP — photographic strip ─────────────────────────────── */}
-      {activeOffices.length > 0 && (
-        <section style={{ backgroundColor: '#061529', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px 40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <p style={eyebrow}>Network Overview</p>
-                <h2 style={{ fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.2px' }}>
-                  Our Global Footprint
-                </h2>
-              </div>
-              <p style={{ fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
-                Office locations are representational — exact addresses confirmed upon enquiry.
+            <div
+              style={{
+                position: 'relative',
+                maxWidth: 1140,
+                margin: '0 auto',
+                padding: '88px 24px 80px',
+              }}
+            >
+              <p style={eyebrow}>International Network</p>
+              <h1
+                style={{
+                  fontSize: 'clamp(32px,5vw,54px)',
+                  fontWeight: 800,
+                  color: '#fff',
+                  letterSpacing: '-0.04em',
+                  marginBottom: 20,
+                  lineHeight: 1.06,
+                  maxWidth: 720,
+                }}
+              >
+                Global Logistics Locations
+              </h1>
+              <p
+                style={{
+                  fontSize: 'clamp(15px,1.8vw,18px)',
+                  color: '#94a3b8',
+                  lineHeight: 1.7,
+                  maxWidth: 560,
+                  marginBottom: 44,
+                }}
+              >
+                JOSEPHDELIVERYCOMPANY operates an international logistics network connecting
+                the United States, Brazil, Japan, India, South Korea, and France with
+                verified regional facilities and cargo operations.
               </p>
-            </div>
 
-            {/* Photo strip */}
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(activeOffices.length, 6)},1fr)`, gap: 4, borderRadius: 8, overflow: 'hidden' }}
-              className="globe-strip">
-              {activeOffices.map(o => (
-                <div key={o.id} style={{ position: 'relative', aspectRatio: '2/3', overflow: 'hidden', cursor: 'default' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={o.imageUrl}
-                    alt={o.imageAlt}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.5) saturate(0.8)' }}
-                    loading="lazy"
-                  />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 40%,rgba(6,21,41,0.92) 100%)' }} />
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 10px 12px' }}>
-                    <p style={{ fontSize: 9, fontWeight: 700, color: '#c0392b', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 2 }}>{o.countryCode}</p>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{o.city}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <main>
-        {/* ── SEARCH & FILTER ──────────────────────────────────────────── */}
-        <section style={{ backgroundColor: '#f4f5f7', borderBottom: '1px solid #e2e6ea', padding: '24px' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 180 }}>
-              <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', fontSize: 13, pointerEvents: 'none' }} />
-              <input
-                type="text"
-                placeholder="Search by country, city or region…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px 10px 34px', fontSize: 14, color: '#0a1f3c', border: '1px solid #d1d5db', borderRadius: 6, outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
-              />
+              <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+                <Stat label="Active Locations" value={locations.length} accent={COLORS.red} />
+                <Stat label="Countries" value={countries.length} accent="#fff" />
+                <Stat
+                  label="Verified Plotted"
+                  value={
+                    locations.filter(
+                      (l) =>
+                        l.latitude != null &&
+                        l.longitude != null &&
+                        Number.isFinite(Number(l.latitude)) &&
+                        Number.isFinite(Number(l.longitude)),
+                    ).length
+                  }
+                  accent="#fff"
+                />
+              </div>
             </div>
           </section>
 
@@ -1193,41 +1136,11 @@ export default function LocationsPage() {
                     CONTACT THE NETWORK TEAM
                   </Link>
                 </div>
-              ))
-            )}
-          </div>
-        </section>
-
-        {/* ── PENDING INFO NOTICE ───────────────────────────────────────── */}
-        {activeOffices.some(o => pending(o.address) || pending(o.phone) || pending(o.email)) && (
-          <section style={{ backgroundColor: '#fff', borderTop: '1px solid #e2e6ea', borderBottom: '1px solid #e2e6ea', padding: '18px 24px' }}>
-            <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: '#0369a1', flexShrink: 0 }} />
-              <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.5 }}>
-                <strong style={{ color: '#0a1f3c' }}>Office contact details are pending confirmation.</strong>{' '}
-                For immediate enquiries please{' '}
-                <Link href="/contact" style={{ color: '#c0392b', fontWeight: 600 }}>contact us directly</Link>.
-              </p>
-            </div>
-          </section>
-        )}
-
-        {/* ── CTA ──────────────────────────────────────────────────────── */}
-        <section style={{ backgroundColor: '#0a1f3c', padding: '64px 24px', borderTop: '4px solid #c0392b' }}>
-          <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
-            <h2 style={{ fontSize: 'clamp(22px,3.5vw,36px)', fontWeight: 800, color: '#fff', marginBottom: 14, letterSpacing: '-0.3px' }}>
-              Ready to ship internationally?
-            </h2>
-            <p style={{ fontSize: 15, color: '#94a3b8', marginBottom: 32, lineHeight: 1.7 }}>
-              Get a competitive quote and our team will be in touch.
-            </p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/quote" style={btnRed}>GET A QUOTE</Link>
-              <Link href="/contact" style={btnGhost}>CONTACT A REGIONAL OFFICE</Link>
-            </div>
-          </div>
-        </section>
-      </main>
+              </div>
+            </section>
+          </main>
+        </>
+      )}
 
       <Footer />
 
@@ -1245,10 +1158,7 @@ export default function LocationsPage() {
   );
 }
 
-/* ── Office Card ─────────────────────────────────────────────────────────── */
-function OfficeCard({ office }) {
-  const pending = v => typeof v === 'string' && v.startsWith('[');
-  const [imageFailed, setImageFailed] = useState(!office.imageUrl);
+/* ── UI Helpers ────────────────────────────────────────────────────────── */
 
 const eyebrow = {
   fontSize: 11,
@@ -1311,59 +1221,19 @@ const btnGhost = {
 
 function Stat({ label, value, accent }) {
   return (
-    <div id={`location-${office.id}`} style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {/* Photo */}
-      <div style={{ position: 'relative', height: 200, overflow: 'hidden', backgroundColor: '#0a1f3c', flexShrink: 0 }}>
-        {!imageFailed ? <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={office.imageUrl} alt={office.imageAlt || `${office.country} logistics facility`} onError={() => setImageFailed(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.75 }} loading="lazy" />
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,31,60,0.32)' }} />
-        </> : <div style={{ height: '100%', display: 'grid', placeItems: 'center', padding: 24, color: '#cbd5e1', textAlign: 'center' }}><div><i className="fa-solid fa-image" style={{ fontSize: 28, marginBottom: 10 }} /><p style={{ fontSize: 12 }}>Location photograph unavailable</p></div></div>}
-
-        {/* City + country overlay */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 18px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <div>
-              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 3 }}>{office.country}</p>
-              <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>{office.city}</h3>
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#fff', backgroundColor: 'rgba(192,57,43,0.9)', padding: '4px 10px', borderRadius: 4 }}>
-              {office.officeType}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <p style={{ fontSize: 13, color: '#4a5568', lineHeight: 1.6 }}>{office.description || 'International Logistics Network'}</p>
-
-        <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {office.openingHours && <Row icon="fa-regular fa-clock"   value={office.openingHours} />}
-          {office.address && <Row icon="fa-solid fa-map-pin"   value={office.address}     pending={pending(office.address)} />}
-          {office.phone && <Row icon="fa-solid fa-phone"     value={office.phone}       pending={pending(office.phone)} />}
-          {office.email && <Row icon="fa-solid fa-envelope"  value={office.email}       pending={pending(office.email)} />}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div style={{ padding: '11px 20px', borderTop: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
-          <Link href={`#location-${office.id}`} style={{ fontSize: 13, fontWeight: 700, color: '#0a1f3c', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-            VIEW LOCATION <i className="fa-solid fa-arrow-right" style={{ fontSize: 10 }} />
-          </Link>
-          {Number.isFinite(Number(office.latitude)) && Number.isFinite(Number(office.longitude)) && <a href={`https://www.openstreetmap.org/?mlat=${office.latitude}&mlon=${office.longitude}#map=12/${office.latitude}/${office.longitude}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#c0392b', fontWeight: 700, textDecoration: 'none' }}>OPEN MAP</a>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Row({ icon, value, pending }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-      <i className={icon} style={{ fontSize: 11, color: pending ? '#d1d5db' : '#c0392b', marginTop: 2, flexShrink: 0 }} />
-      <p style={{ fontSize: 12, color: pending ? '#b0b8c5' : '#4a5568', lineHeight: 1.5, fontStyle: pending ? 'italic' : 'normal' }}>
+    <div>
+      <p
+        style={{
+          fontSize: 'clamp(28px,4vw,42px)',
+          fontWeight: 900,
+          color: accent,
+          letterSpacing: '-0.04em',
+          lineHeight: 1,
+          margin: 0,
+          marginBottom: 5,
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
         {value}
       </p>
       <p

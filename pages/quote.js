@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -89,9 +90,8 @@ export default function QuotePage() {
     message: '',
   });
   const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState(null);
 
   function update(field, value) {
     setForm((p) => ({ ...p, [field]: value }));
@@ -140,31 +140,11 @@ export default function QuotePage() {
     return e;
   }
 
-  function next() {
-    const errs = validateStep(step);
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    setStep((s) => s + 1);
-  }
-
-  function back() { setStep((s) => s - 1); }
-
   async function handleSubmit(e) {
     e.preventDefault();
-    const errs = validateStep(3);
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    setSaving(true);
-    setSubmitError('');
-    try {
-      const response = await fetch('/api/quote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Unable to submit your quote request right now. Please try again.');
-      setSubmitted(true);
-    } catch (error) {
-      setSubmitError(error.message);
-    } finally {
-      setSaving(false);
-    }
-  }
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
 
     setSubmitting(true);
     setSubmitResult(null);
@@ -356,219 +336,96 @@ export default function QuotePage() {
                 Your quote request has been submitted successfully. Our team will
                 review your request and contact you.
               </p>
-              <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '36px' }}>
-                Our team will review the request and follow up using the contact details provided.
-              </p>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Link href="/track" style={btnRed}>TRACK A SHIPMENT</Link>
-                <Link href="/" style={btnOutline}>Back to Homepage</Link>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Link
+                  href="/track"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 22px',
+                    backgroundColor: COLORS.red,
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    letterSpacing: '0.3px',
+                  }}
+                >
+                  TRACK A SHIPMENT
+                </Link>
+                <Link
+                  href="/"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 22px',
+                    backgroundColor: '#fff',
+                    color: COLORS.navy,
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    border: '1px solid #d1d5db',
+                  }}
+                >
+                  Back to Homepage
+                </Link>
               </div>
             </div>
           ) : (
-            <>
-              {/* ── Progress stepper ──────────────────────────── */}
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px' }}>
-                {STEPS.map((label, i) => {
-                  const idx = i + 1;
-                  const done = step > idx;
-                  const active = step === idx;
-                  return (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 'none' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                          width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
-                          backgroundColor: done ? '#c0392b' : active ? '#0a1f3c' : '#e2e6ea',
-                          color: done || active ? '#fff' : '#9ca3af',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '12px', fontWeight: 700,
-                        }}>
-                          {done ? <i className="fa-solid fa-check" style={{ fontSize: '11px' }} /> : idx}
-                        </div>
-                        <span style={{ fontSize: '12px', fontWeight: active ? 700 : 500, color: active ? '#0a1f3c' : '#9ca3af', whiteSpace: 'nowrap' }}>
-                          {label}
-                        </span>
-                      </div>
-                      {i < STEPS.length - 1 && (
-                        <div style={{ flex: 1, height: '2px', backgroundColor: done ? '#c0392b' : '#e2e6ea', margin: '0 12px' }} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* ── Form card ────────────────────────────────── */}
-              <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e6ea', overflow: 'hidden' }}>
-                <form onSubmit={handleSubmit} noValidate>
-                  {submitError && <p role="alert" style={{ marginBottom: 18, padding: '11px 14px', borderRadius: 6, color: '#a93226', backgroundColor: '#fff1ef', fontSize: 13 }}>{submitError}</p>}
-
-                  {/* STEP 1 — Service type */}
-                  {step === 1 && (
-                    <div style={{ padding: 'clamp(24px, 5vw, 40px)' }}>
-                      <h2 style={sectionTitle}>What service do you need?</h2>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '14px', marginBottom: '10px' }}>
-                        {SERVICE_TYPES.map((s) => (
-                          <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => update('serviceType', s.id)}
-                            style={{
-                              padding: '20px 12px',
-                              borderRadius: '8px',
-                              border: form.serviceType === s.id ? '2px solid #c0392b' : '2px solid #e2e6ea',
-                              backgroundColor: form.serviceType === s.id ? '#fff5f4' : '#fafafa',
-                              cursor: 'pointer',
-                              textAlign: 'center',
-                              transition: 'all 0.15s',
-                            }}
-                          >
-                            <i className={s.icon} style={{ fontSize: '22px', color: form.serviceType === s.id ? '#c0392b' : '#9ca3af', marginBottom: '10px', display: 'block' }} />
-                            <p style={{ fontSize: '13px', fontWeight: 700, color: form.serviceType === s.id ? '#c0392b' : '#374151', margin: '0 0 4px' }}>{s.label}</p>
-                            <p style={{ fontSize: '11px', color: '#9ca3af', margin: 0 }}>{s.desc}</p>
-                          </button>
-                        ))}
-                      </div>
-                      {errors.serviceType && <p style={errStyle}>{errors.serviceType}</p>}
-                    </div>
-                  )}
-
-                  {/* STEP 2 — Shipment details */}
-                  {step === 2 && (
-                    <div style={{ padding: 'clamp(24px, 5vw, 40px)' }}>
-                      <h2 style={sectionTitle}>Shipment details</h2>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0' }}>
-                        {/* Origin */}
-                        <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '18px', marginBottom: '16px', border: '1px solid #e2e6ea' }}>
-                          <p style={subLabel}><i className="fa-solid fa-circle-dot" style={{ color: '#c0392b', marginRight: '7px' }} />Origin</p>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                            <QField label="City" name="originCity" value={form.originCity} onChange={(v) => update('originCity', v)} error={errors.originCity} placeholder="Lagos" />
-                            <QField label="State / Country" name="originState" value={form.originState} onChange={(v) => update('originState', v)} error={errors.originState} placeholder="Lagos State" />
-                          </div>
-                        </div>
-
-                        {/* Destination */}
-                        <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '18px', marginBottom: '16px', border: '1px solid #e2e6ea' }}>
-                          <p style={subLabel}><i className="fa-solid fa-location-dot" style={{ color: '#c0392b', marginRight: '7px' }} />Destination</p>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                            <QField label="City" name="destCity" value={form.destCity} onChange={(v) => update('destCity', v)} error={errors.destCity} placeholder="Abuja" />
-                            <QField label="State / Country" name="destState" value={form.destState} onChange={(v) => update('destState', v)} error={errors.destState} placeholder="FCT" />
-                          </div>
-                        </div>
-
-                        {/* Weight & date */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
-                          <div>
-                            <label style={labelStyle}>Estimated Weight</label>
-                            <select
-                              value={form.weight}
-                              onChange={(e) => update('weight', e.target.value)}
-                              style={{ ...inputStyle, appearance: 'none', backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: '32px' }}
-                            >
-                              <option value="">Select weight</option>
-                              {WEIGHT_RANGES.map((w) => <option key={w} value={w}>{w}</option>)}
-                            </select>
-                            {errors.weight && <p style={errStyle}>{errors.weight}</p>}
-                          </div>
-                          <div>
-                            <label style={labelStyle}>Preferred Pickup Date</label>
-                            <input
-                              type="date"
-                              value={form.pickupDate}
-                              onChange={(e) => update('pickupDate', e.target.value)}
-                              min={new Date().toISOString().split('T')[0]}
-                              style={inputStyle}
-                            />
-                            {errors.pickupDate && <p style={errStyle}>{errors.pickupDate}</p>}
-                          </div>
-                        </div>
-
-                        {/* Description */}
-                        <div>
-                          <label style={labelStyle}>Item Description <span style={{ color: '#9ca3af', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
-                          <textarea
-                            value={form.description}
-                            onChange={(e) => update('description', e.target.value)}
-                            rows={3}
-                            placeholder="e.g. Electronics, clothing, documents…"
-                            style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* STEP 3 — Contact info */}
-                  {step === 3 && (
-                    <div style={{ padding: 'clamp(24px, 5vw, 40px)' }}>
-                      <h2 style={sectionTitle}>Your contact details</h2>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                        <QField label="Full Name" name="name" value={form.name} onChange={(v) => update('name', v)} error={errors.name} placeholder="John Doe" />
-                        <QField label="Company" name="company" value={form.company} onChange={(v) => update('company', v)} placeholder="Optional" />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                        <QField label="Email" name="email" type="email" value={form.email} onChange={(v) => update('email', v)} error={errors.email} placeholder="john@example.com" />
-                        <QField label="Phone" name="phone" type="tel" value={form.phone} onChange={(v) => update('phone', v)} error={errors.phone} placeholder="+1 (305) 555-0100" />
-                      </div>
-
-                      <div style={{ marginBottom: '24px' }}>
-                        <label style={labelStyle}>Additional Notes <span style={{ color: '#9ca3af', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
-                        <textarea
-                          value={form.notes}
-                          onChange={(e) => update('notes', e.target.value)}
-                          rows={3}
-                          placeholder="Special handling requirements, preferred contact times…"
-                          style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
-                        />
-                      </div>
-
-                      {/* Quote summary */}
-                      <div style={{ backgroundColor: '#0a1f3c', borderRadius: '8px', padding: '18px 20px', marginBottom: '8px' }}>
-                        <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '14px' }}>Summary</p>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                          {[
-                            ['Service', SERVICE_TYPES.find(s => s.id === form.serviceType)?.label],
-                            ['Route', `${form.originCity || '—'} → ${form.destCity || '—'}`],
-                            ['Weight', form.weight || '—'],
-                            ['Pickup', form.pickupDate || '—'],
-                          ].map(([k, v]) => (
-                            <div key={k}>
-                              <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '3px' }}>{k}</p>
-                              <p style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>{v}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── Navigation buttons ──────────────────── */}
-                  <div style={{
-                    padding: '20px clamp(24px, 5vw, 40px)',
-                    borderTop: '1px solid #f1f5f9',
+            <form onSubmit={handleSubmit} noValidate>
+              {submitResult?.ok === false && (
+                <div
+                  style={{
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    borderRadius: 8,
+                    padding: '16px',
+                    marginBottom: 24,
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '12px',
-                  }}>
-                    <div>
-                      {step > 1 && (
-                        <button type="button" onClick={back} style={btnBack}>
-                          <i className="fa-solid fa-arrow-left" style={{ fontSize: '12px' }} /> Back
-                        </button>
-                      )}
-                    </div>
-                    <div>
-                      {step < 3 ? (
-                        <button type="button" onClick={next} style={btnPrimary}>
-                          Continue <i className="fa-solid fa-arrow-right" style={{ fontSize: '12px' }} />
-                        </button>
-                      ) : (
-                        <button type="submit" disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.65 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}>
-                          {saving ? 'Submitting…' : 'Submit Quote Request'} <i className="fa-solid fa-paper-plane" style={{ fontSize: '12px' }} />
-                        </button>
-                      )}
-                    </div>
+                    alignItems: 'flex-start',
+                    gap: 12,
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-exclamation-circle"
+                    style={{ color: COLORS.red, fontSize: 20, marginTop: 2 }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <p
+                      style={{
+                        color: COLORS.red,
+                        fontWeight: 600,
+                        margin: 0,
+                        marginBottom: 6,
+                      }}
+                    >
+                      {submitResult.message}
+                    </p>
+                    {submitResult.errors && submitResult.errors.length > 0 && (
+                      <ul
+                        style={{
+                          margin: 0,
+                          paddingLeft: 18,
+                          color: '#991b1b',
+                          fontSize: 13,
+                        }}
+                      >
+                        {submitResult.errors.map((err, i) => (
+                          <li key={i}>{err}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
               )}

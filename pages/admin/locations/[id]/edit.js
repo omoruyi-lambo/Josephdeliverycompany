@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import AdminLayout from '../../../../components/AdminLayout';
 import { requireAdmin } from '../../../../lib/adminAuth';
@@ -49,11 +49,7 @@ export default function EditLocation() {
     is_active: true,
   });
 
-  useEffect(() => {
-    if (id) fetchLocation();
-  }, [id]);
-
-  async function fetchLocation() {
+  const fetchLocation = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch('/api/admin/locations');
@@ -89,7 +85,11 @@ export default function EditLocation() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
+
+  useEffect(() => {
+    if (id) void fetchLocation();
+  }, [fetchLocation, id]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;

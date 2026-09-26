@@ -80,7 +80,7 @@ export default function ServicesPage() {
       <section style={{ backgroundColor: '#0a1f3c', padding: '64px 24px', borderTop: '4px solid #c0392b' }}>
         <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 'clamp(24px,4vw,38px)', fontWeight: 800, color: '#fff', marginBottom: 14, letterSpacing: '-0.3px' }}>Not sure which service fits?</h2>
-          <p style={{ fontSize: 15, color: '#94a3b8', marginBottom: 32, lineHeight: 1.6 }}>Tell us what you need to ship and we'll recommend the best option and give you a price.</p>
+          <p style={{ fontSize: 15, color: '#94a3b8', marginBottom: 32, lineHeight: 1.6 }}>Tell us what you need to ship and we&apos;ll recommend the best option and give you a price.</p>
           <Link href="/quote" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px', backgroundColor: '#c0392b', color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none', borderRadius: 6, letterSpacing: '0.4px' }}>
             GET A FREE QUOTE
           </Link>

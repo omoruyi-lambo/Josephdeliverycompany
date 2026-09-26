@@ -76,7 +76,7 @@ export default function AboutPage() {
               <p style={eyebrowDark}>Mission</p>
               <h2 style={h2}>Logistics That Works for Everyone</h2>
               <p style={body}>We exist to make professional-grade shipping accessible to every individual and business in Nigeria — not just large corporations. From the Lagos street trader to the Abuja enterprise, the same quality of service, tracking, and care applies.</p>
-              <p style={{ ...body, marginTop: 16 }}>We invest heavily in our technology, our people, and our network so that your parcel's journey is as smooth as the experience of booking it.</p>
+              <p style={{ ...body, marginTop: 16 }}>We invest heavily in our technology, our people, and our network so that your parcel&apos;s journey is as smooth as the experience of booking it.</p>
             </div>
             <div style={{ backgroundColor: '#0a1f3c', borderRadius: 12, padding: '32px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
               {['Reliable delivery you can track in real time.', 'Pricing that is honest and transparent.', 'Support available around the clock.', 'Coverage from Lagos to London and beyond.'].map(t => (

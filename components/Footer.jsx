@@ -95,7 +95,7 @@ export default function Footer() {
 
             {/* Contact details */}
             <address style={{ fontStyle: 'normal', display: 'flex', flexDirection: 'column', gap: '11px' }}>
-              <a
+              <Link
                 href="/contact"
                 className="footer-contact-link"
                 style={{
@@ -111,7 +111,7 @@ export default function Footer() {
               >
                 <i className="fa-solid fa-envelope" style={{ fontSize: '12px', marginTop: '1px', color: '#c0392b', flexShrink: 0 }} />
                 Contact support
-              </a>
+              </Link>
             </address>
 
             {/* Social icons */}

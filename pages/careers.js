@@ -46,7 +46,7 @@ export default function CareersPage() {
             Build the Future of<br />Nigerian Logistics
           </h1>
           <p style={{ fontSize: 'clamp(14px,1.8vw,17px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 520 }}>
-            We're a fast-growing logistics company on a mission to make reliable delivery accessible to every Nigerian. If that mission excites you, we'd love to hear from you.
+            We&apos;re a fast-growing logistics company on a mission to make reliable delivery accessible to every Nigerian. If that mission excites you, we&apos;d love to hear from you.
           </p>
         </div>
       </section>
@@ -105,9 +105,9 @@ export default function CareersPage() {
         {/* Open application */}
         <section style={{ backgroundColor: '#0a1f3c', padding: '64px 24px', borderTop: '4px solid #c0392b' }}>
           <div style={{ maxWidth: 620, margin: '0 auto', textAlign: 'center' }}>
-            <h2 style={{ fontSize: 'clamp(22px,3.5vw,36px)', fontWeight: 800, color: '#fff', marginBottom: 14, letterSpacing: '-0.3px' }}>Don't see your role?</h2>
+            <h2 style={{ fontSize: 'clamp(22px,3.5vw,36px)', fontWeight: 800, color: '#fff', marginBottom: 14, letterSpacing: '-0.3px' }}>Don&apos;t see your role?</h2>
             <p style={{ fontSize: 15, color: '#94a3b8', marginBottom: 32, lineHeight: 1.6 }}>
-              We're always interested in exceptional people. Send us your CV and tell us how you'd contribute.
+              We&apos;re always interested in exceptional people. Send us your CV and tell us how you&apos;d contribute.
             </p>
             <Link href="/contact" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px', backgroundColor: '#c0392b', color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none', borderRadius: 6, letterSpacing: '0.4px' }}>
               SEND OPEN APPLICATION

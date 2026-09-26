@@ -31,7 +31,13 @@ export default function SignInPage() {
       if (error) {
         setSubmitError(error.message || 'Unable to sign in. Please check your details.');
       } else {
-        await router.push('/account');
+        const requestedDestination = Array.isArray(router.query.next) ? router.query.next[0] : router.query.next;
+        const destination = requestedDestination?.startsWith('/') && !requestedDestination.startsWith('//')
+          ? requestedDestination
+          : '/account';
+        // A full navigation lets the browser commit Supabase's session cookies
+        // before the protected page performs its first server-side auth check.
+        window.location.assign(new URL(destination, window.location.origin).toString());
       }
     } catch (error) {
       setSubmitError(error?.message || 'Unable to connect to the account service. Please try again.');

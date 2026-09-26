@@ -1,5 +1,5 @@
-import { requireAdminAuth } from '../../../../lib/adminAuth';
-import { supabaseAdmin } from '../../../../lib/supabase/admin';
+import { requireAdmin } from '../../../../lib/adminAuth';
+import { getSupabaseAdminClient } from '../../../../lib/supabase/admin';
 
 const REGION_MAP = {
   'United States': 'Americas',
@@ -166,15 +166,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Location id is required.' });
   }
 
-  const authResult = await requireAdminAuth(req, res);
-  if (!authResult.isAdmin) {
-    return res.status(401).json({
-      error:
-        authResult.redirectTo === '/signin'
-          ? 'Authentication required.'
-          : 'Admin authorization required.',
-    });
-  }
+  const auth = await requireAdmin(req, res);
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const supabaseAdmin = getSupabaseAdminClient();
 
   if (req.method === 'GET') {
     try {

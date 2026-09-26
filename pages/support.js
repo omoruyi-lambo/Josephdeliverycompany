@@ -40,7 +40,7 @@ export default function SupportPage() {
         <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
           <p style={eyebrow}>Help Centre</p>
           <h1 style={{ fontSize: 'clamp(30px,5vw,50px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.08 }}>
-            We're Here to Help
+            We&apos;re Here to Help
           </h1>
           <p style={{ fontSize: 'clamp(14px,1.8vw,17px)', color: '#94a3b8', lineHeight: 1.7, maxWidth: 500, margin: '0 auto' }}>
             Find shipment help, browse common topics, or send a secure message to our support team.

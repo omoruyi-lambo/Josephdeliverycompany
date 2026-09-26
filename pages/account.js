@@ -1,10 +1,12 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import AuthShell from '../components/AuthShell';
 import { supabase } from '../lib/supabase/client';
 
 export default function AccountPage() {
+  const router = useRouter();
   const [state, setState] = useState({ loading: true, user: null, profile: null, error: '' });
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function AccountPage() {
 
   async function signOut() {
     await supabase.auth.signOut();
-    window.location.href = '/signin';
+    await router.replace('/signin');
   }
 
   if (state.loading) {

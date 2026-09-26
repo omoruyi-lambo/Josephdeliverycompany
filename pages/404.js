@@ -81,7 +81,7 @@ export default function NotFoundPage() {
               maxWidth: '440px',
               margin: '0 auto 36px',
             }}>
-              The page you requested doesn't exist or may have been moved. Let us help you find where you need to go.
+              The page you requested doesn&apos;t exist or may have been moved. Let us help you find where you need to go.
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -131,7 +131,7 @@ export default function NotFoundPage() {
         <section style={{ backgroundColor: '#f4f5f7', padding: '64px 24px' }}>
           <div style={{ maxWidth: '900px', margin: '0 auto' }}>
             <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', color: '#c0392b', marginBottom: '10px' }}>
-              While You're Here
+              While You&apos;re Here
             </p>
             <h2 style={{ textAlign: 'center', fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 700, color: '#0a1f3c', marginBottom: '40px', letterSpacing: '-0.2px' }}>
               Popular destinations

@@ -72,7 +72,7 @@ export default function PrivacyPage() {
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
           <div style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 12, padding: 'clamp(24px,5vw,44px)' }}>
             <p style={{ fontSize: 15, color: '#4a5568', lineHeight: 1.8, marginBottom: 32 }}>
-              Josephdeliverycompany ("we", "us", "our") is committed to protecting your privacy. This policy explains what personal data we collect, how we use it, and your rights regarding it.
+              Josephdeliverycompany (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is committed to protecting your privacy. This policy explains what personal data we collect, how we use it, and your rights regarding it.
             </p>
             {SECTIONS.map(s => (
               <div key={s.title} style={{ marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #f1f5f9' }}>

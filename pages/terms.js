@@ -76,7 +76,7 @@ export default function TermsPage() {
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <div style={{ backgroundColor: '#fff', border: '1px solid #e2e6ea', borderRadius: 12, padding: 'clamp(24px,5vw,44px)' }}>
             <p style={{ fontSize: 15, color: '#4a5568', lineHeight: 1.8, marginBottom: 32 }}>
-              These Terms of Service ("Terms") govern your use of Josephdeliverycompany's website, mobile applications, and logistics services. Please read them carefully before using our services.
+              These Terms of Service (&quot;Terms&quot;) govern your use of Josephdeliverycompany&apos;s website, mobile applications, and logistics services. Please read them carefully before using our services.
             </p>
             {SECTIONS.map(s => (
               <div key={s.title} style={{ marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #f1f5f9' }}>

@@ -2,10 +2,10 @@
  * Chatbot.jsx — Floating customer-support chat widget
  *
  * Architecture:
- *   User types → browser state → POST /api/chat → Gemini → reply
+ *   User types → browser state → POST /api/chat → server-side Groq → reply
  *
- * The Gemini API key never touches this file. All AI calls go through
- * the server-side /api/chat route.
+ * The Groq API key never touches this file. All AI calls go through the
+ * server-side /api/chat route.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -24,6 +24,8 @@ const WELCOME = {
   role: 'assistant',
   text: 'Welcome to JOSEPHDELIVERYCOMPANY. I can help with shipment tracking, shipping services, locations, quotes, and general delivery questions. How can I help you?',
 };
+
+const API_FALLBACK = 'Sorry, our assistant is temporarily unavailable. Please try again later or contact our support team.';
 
 /* ── Colour tokens (match site design system) ────────────────────────────── */
 const C = {
@@ -80,17 +82,29 @@ export default function Chatbot() {
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20_000);
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed, history: buildHistory() }),
+        signal: controller.signal,
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(API_FALLBACK);
+      }
 
       if (!res.ok || data.error) {
-        throw new Error(data.error || 'Unexpected error');
+        throw new Error(res.status === 400 ? (data.error || API_FALLBACK) : API_FALLBACK);
+      }
+      if (typeof data.reply !== 'string' || !data.reply.trim()) {
+        throw new Error(API_FALLBACK);
       }
 
       const botMsg = { id: (Date.now() + 1).toString(), role: 'assistant', text: data.reply };
@@ -99,15 +113,16 @@ export default function Chatbot() {
       if (!open) setUnread(n => n + 1);
 
     } catch (err) {
-      const errMsg = err.message?.length < 300
+      const errMsg = err.name === 'Error' && typeof err.message === 'string'
         ? err.message
-        : "I'm unable to respond right now. Please try again shortly or contact our support team.";
+        : API_FALLBACK;
       setError(errMsg);
       setMessages(prev => [
         ...prev,
         { id: (Date.now() + 1).toString(), role: 'assistant', text: errMsg, isError: true },
       ]);
     } finally {
+      clearTimeout(timeout);
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
