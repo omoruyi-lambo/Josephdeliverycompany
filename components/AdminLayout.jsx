@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 
 const navigation = [
   { label: 'Dashboard', href: '/admin', icon: 'fa-solid fa-grid-2' },
@@ -11,5 +12,73 @@ const navigation = [
 ];
 
 export default function AdminLayout({ title, description, children }) {
-  return <main className="admin-app"><aside className="admin-sidebar"><Link href="/admin" className="admin-brand" aria-label="Joseph Delivery admin dashboard"><Image src="/images/logo.png" alt="Joseph Delivery Company" width={190} height={58} /></Link><div className="admin-sidebar-label">Workspace</div><nav className="admin-sidebar-nav">{navigation.map(item => <Link key={item.href} href={item.href} className="admin-sidebar-link"><i className={item.icon} /><span>{item.label}</span></Link>)}</nav><div className="admin-sidebar-bottom"><Link href="/admin/settings" className="admin-sidebar-link"><i className="fa-solid fa-sliders" /><span>Settings</span></Link><Link href="/" className="admin-sidebar-link"><i className="fa-solid fa-arrow-up-right-from-square" /><span>View website</span></Link></div></aside><section className="admin-workspace"><header className="admin-topbar"><Link href="/admin" className="admin-mobile-brand" aria-label="Joseph Delivery admin dashboard"><Image src="/images/logo.png" alt="Joseph Delivery Company" width={190} height={58} /></Link><div className="admin-topbar-right"><span className="admin-live"><i /> Live operations</span><Link href="/admin/settings" className="admin-avatar" aria-label="Open admin settings">JD</Link></div></header><div className="admin-content"><div className="admin-page-heading"><div><p className="admin-breadcrumb">Operations <span>/</span> {title}</p><h1>{title}</h1>{description && <p>{description}</p>}</div>{title !== 'Admin dashboard' && <Link href="/admin" className="admin-heading-link"><i className="fa-solid fa-arrow-left" /> Dashboard</Link>}</div>{children}</div></section></main>;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  return (
+    <main className="admin-app">
+      <aside className={`admin-sidebar ${mobileMenuOpen ? 'admin-sidebar-open' : ''}`}>
+        <Link href="/admin" className="admin-brand" aria-label="Joseph Delivery admin dashboard">
+          <Image src="/images/logo.png" alt="Joseph Delivery Company" width={190} height={58} />
+        </Link>
+        <div className="admin-sidebar-label">Workspace</div>
+        <nav className="admin-sidebar-nav">
+          {navigation.map(item => (
+            <Link key={item.href} href={item.href} className="admin-sidebar-link" onClick={() => setMobileMenuOpen(false)}>
+              <i className={item.icon} />
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="admin-sidebar-bottom">
+          <Link href="/admin/settings" className="admin-sidebar-link" onClick={() => setMobileMenuOpen(false)}>
+            <i className="fa-solid fa-sliders" />
+            <span>Settings</span>
+          </Link>
+          <Link href="/" className="admin-sidebar-link" onClick={() => setMobileMenuOpen(false)}>
+            <i className="fa-solid fa-arrow-up-right-from-square" />
+            <span>View website</span>
+          </Link>
+        </div>
+      </aside>
+      
+      <div 
+        className={`admin-sidebar-backdrop ${mobileMenuOpen ? 'admin-sidebar-backdrop-visible' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+      
+      <section className="admin-workspace">
+        <header className="admin-topbar">
+          <button 
+            className="admin-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`} />
+          </button>
+          <Link href="/admin" className="admin-mobile-brand" aria-label="Joseph Delivery admin dashboard">
+            <Image src="/images/logo.png" alt="Joseph Delivery Company" width={190} height={58} />
+          </Link>
+          <div className="admin-topbar-right">
+            <span className="admin-live"><i /> Live operations</span>
+            <Link href="/admin/settings" className="admin-avatar" aria-label="Open admin settings">JD</Link>
+          </div>
+        </header>
+        <div className="admin-content">
+          <div className="admin-page-heading">
+            <div>
+              <p className="admin-breadcrumb">Operations <span>/</span> {title}</p>
+              <h1>{title}</h1>
+              {description && <p>{description}</p>}
+            </div>
+            {title !== 'Admin dashboard' && (
+              <Link href="/admin" className="admin-heading-link">
+                <i className="fa-solid fa-arrow-left" /> Dashboard
+              </Link>
+            )}
+          </div>
+          {children}
+        </div>
+      </section>
+    </main>
+  );
 }
