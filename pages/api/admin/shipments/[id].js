@@ -17,6 +17,24 @@ export default async function handler(req, res) {
     return res.status(200).json({ shipment, events: events || [] });
   }
 
+  if (req.method === 'DELETE') {
+    const { data, error } = await admin
+      .from('shipments')
+      .delete()
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      console.error('[admin shipments] delete failed:', error.message);
+      return res.status(500).json({ error: 'Unable to delete shipment.' });
+    }
+    if (!data) return res.status(404).json({ error: 'Shipment not found.' });
+
+    // The existing schema cascades deletion to tracking_events atomically.
+    return res.status(200).json({ deleted: true });
+  }
+
   if (req.method !== 'PATCH') return res.status(405).json({ error: 'Method not allowed.' });
   const allowed = ['customer_name', 'customer_email', 'customer_phone', 'origin', 'origin_country', 'origin_city', 'origin_address', 'origin_lat', 'origin_lng', 'destination', 'destination_country', 'destination_city', 'destination_address', 'destination_lat', 'destination_lng', 'shipment_type', 'service', 'package_type', 'shipment_date', 'estimated_delivery', 'status', 'status_code', 'current_location', 'current_country', 'current_city', 'current_address', 'current_lat', 'current_lng', 'current_position'];
   const updates = Object.fromEntries(Object.entries(req.body || {}).filter(([key, value]) => allowed.includes(key) && value !== undefined));
