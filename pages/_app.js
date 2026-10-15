@@ -2,9 +2,19 @@ import '@/styles/globals.css';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
+import MaintenancePage from '../components/MaintenancePage';
 
 /* Chatbot is client-only (uses browser APIs) — load with no SSR */
 const Chatbot = dynamic(() => import('../components/Chatbot'), { ssr: false });
+
+/* ── Maintenance mode ─────────────────────────────────────────────────────
+   Flip NEXT_PUBLIC_SITE_MAINTENANCE_MODE in .env.local to control this.
+     true  → public visitors see the maintenance screen.
+     false → normal website loads.
+   Admin routes (/admin/*) and API routes (/api/*) are always exempt.
+   ──────────────────────────────────────────────────────────────────────── */
+const MAINTENANCE_MODE =
+  process.env.NEXT_PUBLIC_SITE_MAINTENANCE_MODE === 'true';
 
 /* ── Preloader ────────────────────────────────────────────────────────────
    Mounts only on the homepage. Starts fully visible (covers page) and
@@ -175,9 +185,21 @@ function Preloader() {
 /* ── App shell ─────────────────────────────────────────────────────────── */
 export default function App({ Component, pageProps }) {
   const router = useRouter();
+  const { pathname } = router;
+
+  /* Admin and API routes are always exempt from maintenance mode */
+  const isExempt =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/api');
+
+  /* Show maintenance screen for all public routes when flag is active */
+  if (MAINTENANCE_MODE && !isExempt) {
+    return <MaintenancePage />;
+  }
+
   /* True only on the homepage — evaluated at first render so the
      preloader is in the DOM before any content paints.             */
-  const isHome = router.pathname === '/';
+  const isHome = pathname === '/';
 
   return (
     <>
